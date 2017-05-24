@@ -1,5 +1,18 @@
 import numpy as np
-from math import sqrt, pi, exp
+import cmath
+
+
+def check_ks_ls(ks, ls):
+    idx = -1
+    i = 0
+    for k, s in zip(ks, ls):
+        if k != s:
+            if idx != -1:
+                return -1
+            else:
+                idx = i
+        i += 1
+    return idx
 
 
 def build_hexagon_mf_basis(nmax):
@@ -9,7 +22,7 @@ def build_hexagon_mf_basis(nmax):
 
     # initialize matrices
     # k1up, k1down, k2up, k2down ... k6up, k6down
-    hexagon_mf_bases = [np.zeros((nn, 1), dtype=complex) for _ in range(0, 12)]
+    hexagon_mf_bases = np.array([np.zeros((nn, 1), dtype=complex) for _ in range(0, 12)], dtype=complex)
     # TODO: should be optimized later
     count = 0
     for i0 in range(0, nmax + 1):
@@ -44,81 +57,85 @@ def build_hexagon_mf_operator(hexagon_mf_bases):
     nn = max(hexagon_mf_bases[0].shape)
     # initialize matrices
     # b1up, b1down, b2up, b2down ... b6up, b6down
-    hexagon_mf_operators = [np.zeros((nn, nn), dtype=complex) for _ in range(0, 12)]
+    hexagon_mf_operators = np.array([np.zeros((nn, nn), dtype=complex) for _ in range(0, 12)])
 
     # fill up operators
     for i in range(0, nn):
 
         # ks = [K1up(I), K1down(I) ...]
-        # TODO: might be optimized via list comprehension
-        ks = list(map(lambda x: x.flat[i], hexagon_mf_operators))
+        ks = [k.flat[i] for k in hexagon_mf_bases]
+        # ks = map(lambda x: x.flat[i], hexagon_mf_bases)
 
         for j in range(0, nn):
 
             # ls = [K1up(j), K1down(j) ...]
-            ls = list(map(lambda x: x.flat[j], hexagon_mf_operators))
-
+            ls = [l.flat[j] for l in hexagon_mf_bases]
+            # ls = map(lambda x: x.flat[j], hexagon_mf_bases)
             # TODO: should be optimized later
+            idx = check_ks_ls(ks, ls)
+            if idx != -1 and ks[idx] == ls[idx] - 1:
+                    hexagon_mf_operators[idx][i, j] += cmath.sqrt(ls[idx])
+            # original method
             # b1
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[0][i, j] += sqrt(ls[0])
-            # b2
-            if ks[0] == ls[0] and ks[1] == ls[1]-1 and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[1][i, j] += sqrt(ls[1])
-            # b3
-            if ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2]-1 and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[2][i, j] += sqrt(ls[2])
-            # b4
-            if ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3]-1 and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[3][i, j] += sqrt(ls[3])
-            # b5
-            if ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4]-1 and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[4][i, j] += sqrt(ls[4])
-            # b6
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5]-1 and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[6][i, j] += sqrt(ls[6])
-            # b7
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6]-1 and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[6][i, j] += sqrt(ls[6])
-            # b8
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7]-1 and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[7][i, j] += sqrt(ls[7])
-            # b9
-            if ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8]-1 and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[8][i, j] += sqrt(ls[8])
-            # b10
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9]-1 and ks[10] == ls[10] and ks[11] == ls[11]:
-                hexagon_mf_operators[9][i, j] += sqrt(ls[9])
-            # b11
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10]-1 and ks[11] == ls[11]:
-                hexagon_mf_operators[10][i, j] += sqrt(ls[10])
-            # b12
-            if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
-                ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
-                    ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]-1:
-                hexagon_mf_operators[11][i, j] += sqrt(ls[11])
+            # if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[0][i, j] += cmath.sqrt(ls[0])
+            # # b2
+            # elif ks[0] == ls[0] and ks[1] == ls[1]-1 and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[1][i, j] += cmath.sqrt(ls[1])
+            # # b3
+            # elif ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2]-1 and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[2][i, j] += cmath.sqrt(ls[2])
+            # # b4
+            # elif ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3]-1 and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[3][i, j] += cmath.sqrt(ls[3])
+            # # b5
+            # elif ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4]-1 and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[4][i, j] += cmath.sqrt(ls[4])
+            # # b6
+            # elif ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5]-1 and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[6][i, j] += cmath.sqrt(ls[6])
+            # # b7
+            # elif ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6]-1 and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[6][i, j] += cmath.sqrt(ls[6])
+            # # b8
+            # elif ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7]-1 and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[7][i, j] += cmath.sqrt(ls[7])
+            # # b9
+            # elif ks[0] == ls[0] and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8]-1 and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[8][i, j] += cmath.sqrt(ls[8])
+            # # b10
+            # if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9]-1 and ks[10] == ls[10] and ks[11] == ls[11]:
+            #     hexagon_mf_operators[9][i, j] += cmath.sqrt(ls[9])
+            # # b11
+            # if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10]-1 and ks[11] == ls[11]:
+            #     hexagon_mf_operators[10][i, j] += cmath.sqrt(ls[10])
+            # # b12
+            # if ks[0] == ls[0]-1 and ks[1] == ls[1] and ks[2] == ls[2] and ks[3] == ls[3] and\
+            #     ks[4] == ls[4] and ks[5] == ls[5] and ks[6] == ls[6] and ks[7] == ls[7] and\
+            #         ks[8] == ls[8] and ks[9] == ls[9] and ks[10] == ls[10] and ks[11] == ls[11]-1:
+            #     hexagon_mf_operators[11][i, j] += cmath.sqrt(ls[11])
 
     return hexagon_mf_operators
 
@@ -184,112 +201,112 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
             if ns[0] == ls[0] + 1 and ns[1] == ls[1] and ns[2] == ls[2] - 1 and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[2].conjugate() * sqrt(ns[0] * ls[2])
+                t_terms[i, j] -= ts[2].conjugate() * cmath.sqrt(ns[0] * ls[2])
             if ns[0] == ls[0] - 1 and ns[1] == ls[1] and ns[2] == ls[2] + 1 and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[2] * sqrt(ns[2] * ls[0])
+                t_terms[i, j] -= ts[2] * cmath.sqrt(ns[2] * ls[0])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] + 1 and ns[3] == ls[3] and\
                 ns[4] == ls[4] - 1 and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[0] * sqrt(ns[2] * ls[4])
+                t_terms[i, j] -= ts[0] * cmath.sqrt(ns[2] * ls[4])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] - 1 and ns[3] == ls[3] and\
                 ns[4] == ls[4] + 1 and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[0].conjugate() * sqrt(ns[4] * ls[2])
+                t_terms[i, j] -= ts[0].conjugate() * cmath.sqrt(ns[4] * ls[2])
 
             if ns[0] == ls[0]-1 and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10]+1 and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[4] * sqrt(ns[10] * ls[0])
+                t_terms[i, j] -= ts[4] * cmath.sqrt(ns[10] * ls[0])
             if ns[0] == ls[0]+1 and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10]-1 and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[4].conjugate() * sqrt(ns[0] * ls[10])
+                t_terms[i, j] -= ts[4].conjugate() * cmath.sqrt(ns[0] * ls[10])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10]-1 and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[0] * sqrt(ns[8] * ls[10])
+                t_terms[i, j] -= ts[0] * cmath.sqrt(ns[8] * ls[10])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10]+1 and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[0].conjugate() * sqrt(ns[10] * ls[8])
+                t_terms[i, j] -= ts[0].conjugate() * cmath.sqrt(ns[10] * ls[8])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6]+1 and ns[7] == ls[7] and\
                     ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[2] * sqrt(ns[6] * ls[8])
+                t_terms[i, j] -= ts[2] * cmath.sqrt(ns[6] * ls[8])
             # TODO: check formula here
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6]-1 and ns[7] == ls[7] and\
-                    ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10]+1 and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[2].conjugate() * sqrt(ns[8] * ls[6])
+                    ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
+                t_terms[i, j] -= ts[2].conjugate() * cmath.sqrt(ns[8] * ls[6])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4]+1 and ns[5] == ls[5] and ns[6] == ls[6]-1 and ns[7] == ls[7] and\
                     ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[4] * sqrt(ns[4] * ls[6])
+                t_terms[i, j] -= ts[4] * cmath.sqrt(ns[4] * ls[6])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4]-1 and ns[5] == ls[5] and ns[6] == ls[6]+1 and ns[7] == ls[7] and\
                     ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[4].conjugate() * sqrt(ns[6] * ls[4])
+                t_terms[i, j] -= ts[4].conjugate() * cmath.sqrt(ns[6] * ls[4])
 
             # spin-dn intra-cluster tunneling terms ai^{dagger}aj
             if ns[0] == ls[0] and ns[1] == ls[1]+1 and ns[2] == ls[2] and ns[3] == ls[3]-1 and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[3].conjugate() * sqrt(ns[1] * ls[3])
+                t_terms[i, j] -= ts[3].conjugate() * cmath.sqrt(ns[1] * ls[3])
             if ns[0] == ls[0] and ns[1] == ls[1]-1 and ns[2] == ls[2] and ns[3] == ls[3]+1 and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[3] * sqrt(ns[3] * ls[1])
+                t_terms[i, j] -= ts[3] * cmath.sqrt(ns[3] * ls[1])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3]+1 and\
                 ns[4] == ls[4] and ns[5] == ls[5]-1 and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[1] * sqrt(ns[3] * ls[5])
+                t_terms[i, j] -= ts[1] * cmath.sqrt(ns[3] * ls[5])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3]-1 and\
                 ns[4] == ls[4] and ns[5] == ls[5]+1 and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[1].conjugate() * sqrt(ns[5] * ls[3])
+                t_terms[i, j] -= ts[1].conjugate() * cmath.sqrt(ns[5] * ls[3])
 
             if ns[0] == ls[0] and ns[1] == ls[1]-1 and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]+1:
-                t_terms[i, j] -= ts[5] * sqrt(ns[11] * ls[1])
+                t_terms[i, j] -= ts[5] * cmath.sqrt(ns[11] * ls[1])
             if ns[0] == ls[0] and ns[1] == ls[1]+1 and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]-1:
-                t_terms[i, j] -= ts[5].conjugate() * sqrt(ns[1] * ls[11])
+                t_terms[i, j] -= ts[5].conjugate() * cmath.sqrt(ns[1] * ls[11])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9]+1 and ns[10] == ls[10] and ns[11] == ls[11]-1:
-                t_terms[i, j] -= ts[1].conjugate() * sqrt(ns[9] * ls[11])
+                t_terms[i, j] -= ts[1].conjugate() * cmath.sqrt(ns[9] * ls[11])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
                     ns[8] == ls[8] and ns[9] == ls[9]-1 and ns[10] == ls[10] and ns[11] == ls[11]+1:
-                t_terms[i, j] -= ts[1] * sqrt(ns[11] * ls[9])
+                t_terms[i, j] -= ts[1] * cmath.sqrt(ns[11] * ls[9])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7]+1 and\
                     ns[8] == ls[8] and ns[9] == ls[9]-1 and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[3] * sqrt(ns[7] * ls[9])
+                t_terms[i, j] -= ts[3] * cmath.sqrt(ns[7] * ls[9])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7]-1 and\
-                    ns[8] == ls[8] and ns[9] == ls[9]+1 and ns[10] == ls[10]+1 and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[3].conjugate() * sqrt(ns[9] * ls[7])
+                    ns[8] == ls[8] and ns[9] == ls[9]+1 and ns[10] == ls[10] and ns[11] == ls[11]:
+                t_terms[i, j] -= ts[3].conjugate() * cmath.sqrt(ns[9] * ls[7])
 
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5]+1 and ns[6] == ls[6] and ns[7] == ls[7]-1 and\
                     ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[5].conjugate() * sqrt(ns[5] * ls[7])
+                t_terms[i, j] -= ts[5].conjugate() * cmath.sqrt(ns[5] * ls[7])
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4]-1 and ns[5] == ls[5]-1 and ns[6] == ls[6] and ns[7] == ls[7]+1 and\
                     ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-                t_terms[i, j] -= ts[5] * sqrt(ns[7] * ls[5])
+                t_terms[i, j] -= ts[5] * cmath.sqrt(ns[7] * ls[5])
 
     return t_terms
 
@@ -297,7 +314,7 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
 # build f1upa, f1upad, f1dna, f1dnad ...
 def build_var_terms(hexagon_mf_bases, ts):
     base_l = max(hexagon_mf_bases[0].shape)
-    var_terms = [np.zeros((base_l, base_l), dtype=complex) for _ in range(0, 24)]
+    var_terms = np.array([np.zeros((base_l, base_l), dtype=complex) for _ in range(0, 24)])
     # reorder ts into t1up, t3up, t2up, t1up, t3up, t2up, t1dn, t3dn, t2dn, t1dn, t3dn, t2dn
     t_factors = [ts[0], ts[4], ts[2], ts[0], ts[4], ts[2], ts[1], ts[5], ts[3], ts[1], ts[5], ts[3]]
 
@@ -315,26 +332,26 @@ def build_var_terms(hexagon_mf_bases, ts):
                     # condition for up_a_term
                     if idx % 2 == 0 and ks[idx] == ls[idx] - 1:
                         if idx % 4 == 0:
-                            var_terms[idx // 2] -= t_factors[idx // 2] * sqrt(ls[idx])
+                            var_terms[idx // 2] -= t_factors[idx // 2] * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[idx // 2] -= np.conj(t_factors[idx // 2]) * sqrt(ls[idx])
+                            var_terms[idx // 2] -= np.conj(t_factors[idx // 2]) * cmath.sqrt(ls[idx])
                     # condition for up_adg_term
                     if idx % 2 == 0 and ks[idx] == ls[idx] + 1:
                         if idx % 4 == 0:
-                            var_terms[(idx // 2) + 6] -= np.conj(t_factors[idx // 2]) * sqrt(ls[idx])
+                            var_terms[(idx // 2) + 6] -= np.conj(t_factors[idx // 2]) * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[(idx // 2) + 6] -= t_factors[idx // 2] * sqrt(ls[idx])
+                            var_terms[(idx // 2) + 6] -= t_factors[idx // 2] * cmath.sqrt(ls[idx])
                     # condition for dn_a_term
                     if idx % 2 != 0 and ks[idx] == ls[idx] - 1:
                         if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 12] -= t_factors[(idx // 2) + 6] * sqrt(ls[idx])
+                            var_terms[(idx // 2) + 12] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[(idx // 2) + 12] -= np.conj(t_factors[(idx // 2) + 6]) * sqrt(ls[idx])
+                            var_terms[(idx // 2) + 12] -= np.conj(t_factors[(idx // 2) + 6]) * cmath.sqrt(ls[idx])
                     # condition for dn_adg_term
                     if idx % 2 != 0 and ks[idx] == ls[idx] - 1:
                         if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 18] -= np.conj(t_factors[(idx // 2) + 6]) * sqrt(ls[idx])
+                            var_terms[(idx // 2) + 18] -= np.conj(t_factors[(idx // 2) + 6]) * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[(idx // 2) + 18] -= t_factors[(idx // 2) + 6] * sqrt(ls[idx])
+                            var_terms[(idx // 2) + 18] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
 
     return var_terms

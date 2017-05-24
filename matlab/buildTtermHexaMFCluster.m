@@ -46,7 +46,7 @@ for K=1:BaseL
         if k1up==l1up && k1dn==l1dn && k2up==l2up && k2dn==l2dn && k3up==l3up && k3dn==l3dn && k4up==l4up+1 && k4dn==l4dn && k5up==l5up-1 && k5dn==l5dn && k6up==l6up && k6dn==l6dn
 			Tterm(K,L)=Tterm(K,L)-t2up*sqrt(k4up*l5up);
         end
-        if k1up==l1up && k1dn==l1dn && k2up==l2up && k2dn==l2dn && k3up==l3up && k3dn==l3dn && k4up==l4up-1 && k4dn==l4dn && k5up==l5up+1 && k5dn==l5dn && k6up==l6up+1 && k6dn==l6dn
+        if k1up==l1up && k1dn==l1dn && k2up==l2up && k2dn==l2dn && k3up==l3up && k3dn==l3dn && k4up==l4up-1 && k4dn==l4dn && k5up==l5up+1 && k5dn==l5dn && k6up==l6up && k6dn==l6dn
 			Tterm(K,L)=Tterm(K,L)-conj(t2up)*sqrt(k5up*l4up);
         end
         
@@ -89,7 +89,7 @@ for K=1:BaseL
         if k1up==l1up && k1dn==l1dn && k2up==l2up && k2dn==l2dn && k3up==l3up && k3dn==l3dn && k4up==l4up && k4dn==l4dn+1 && k5up==l5up && k5dn==l5dn-1 && k6up==l6up && k6dn==l6dn
 			Tterm(K,L)=Tterm(K,L)-t2dn*sqrt(k4dn*l5dn);
         end
-        if k1up==l1up && k1dn==l1dn && k2up==l2up && k2dn==l2dn && k3up==l3up && k3dn==l3dn && k4up==l4up && k4dn==l4dn-1 && k5up==l5up && k5dn==l5dn+1 && k6up==l6up+1 && k6dn==l6dn
+        if k1up==l1up && k1dn==l1dn && k2up==l2up && k2dn==l2dn && k3up==l3up && k3dn==l3dn && k4up==l4up && k4dn==l4dn-1 && k5up==l5up && k5dn==l5dn+1 && k6up==l6up && k6dn==l6dn
 			Tterm(K,L)=Tterm(K,L)-conj(t2dn)*sqrt(k5dn*l4dn);
         end
         

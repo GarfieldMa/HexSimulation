@@ -82,7 +82,7 @@ F5dnaterm=buildF5dnatermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5
 F6dnaterm=buildF6dnatermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t2dn);
 
 F1dnadgterm=buildF1dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t1dn);
-F2dnadgterm=buildF2dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t1dn);
+F2dnadgterm=buildF2dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t3dn);
 F3dnadgterm=buildF3dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t2dn);
 F4dnadgterm=buildF4dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t1dn);
 F5dnadgterm=buildF5dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t3dn);
@@ -125,13 +125,10 @@ Psi5dn=zeros(length(Ma),n1+n2);Psi6dn=zeros(length(Ma),n1+n2);
 
 
 Psi12up=zeros(length(Ma),n1+n2);Psi12dn=zeros(length(Ma),n1+n2);
+Psi1updn=zeros(length(Ma),n1+n2);Psi2updn=zeros(length(Ma),n1+n2);        
+Psi12updn=zeros(length(Ma),n1+n2);Psi12dnup=zeros(length(Ma),n1+n2);        
+Psi1upanddn=zeros(length(Ma),n1+n2);Psi2upanddn=zeros(length(Ma),n1+n2);
 
-        Psi1updn=zeros(length(Ma),n1+n2);Psi2updn=zeros(length(Ma),n1+n2);
-        
-        Psi12updn=zeros(length(Ma),n1+n2);Psi12dnup=zeros(length(Ma),n1+n2);
-        
-        Psi1upanddn=zeros(length(Ma),n1+n2);Psi2upanddn=zeros(length(Ma),n1+n2);
-        
         N1up=zeros(length(Ma),n1+n2);
         N1dn=zeros(length(Ma),n1+n2);
         
