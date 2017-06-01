@@ -1,18 +1,6 @@
 import numpy as np
 import cmath
-
-
-def check_ks_ls(ks, ls):
-    idx = -1
-    i = 0
-    for k, s in zip(ks, ls):
-        if k != s:
-            if idx != -1:
-                return -1
-            else:
-                idx = i
-        i += 1
-    return idx
+import scipy.io as sio
 
 
 def build_hexagon_mf_basis(nmax):
@@ -54,6 +42,18 @@ def build_hexagon_mf_basis(nmax):
 
 
 def build_hexagon_mf_operator(hexagon_mf_bases):
+    def check_ks_ls(_ks, _ls):
+        _idx = -1
+        _i = 0
+        for k, s in zip(_ks, _ls):
+            if k != s:
+                if _idx != -1:
+                    return -1
+                else:
+                    _idx = _i
+            _i += 1
+        return _idx
+
     nn = max(hexagon_mf_bases[0].shape)
     # initialize matrices
     # b1up, b1down, b2up, b2down ... b6up, b6down
@@ -64,13 +64,11 @@ def build_hexagon_mf_operator(hexagon_mf_bases):
 
         # ks = [K1up(I), K1down(I) ...]
         ks = [k.flat[i] for k in hexagon_mf_bases]
-        # ks = map(lambda x: x.flat[i], hexagon_mf_bases)
 
         for j in range(0, nn):
 
             # ls = [K1up(j), K1down(j) ...]
             ls = [l.flat[j] for l in hexagon_mf_bases]
-            # ls = map(lambda x: x.flat[j], hexagon_mf_bases)
             # TODO: should be optimized later
             idx = check_ks_ls(ks, ls)
             if idx != -1 and ks[idx] == ls[idx] - 1:
@@ -238,6 +236,7 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6]+1 and ns[7] == ls[7] and\
                     ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
                 t_terms[i, j] -= ts[2] * cmath.sqrt(ns[6] * ls[8])
+            #
             # TODO: check formula here
             if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
                 ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6]-1 and ns[7] == ls[7] and\
@@ -355,3 +354,81 @@ def build_var_terms(hexagon_mf_bases, ts):
                             var_terms[(idx // 2) + 18] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
 
     return var_terms
+
+
+def create(name, func, params):
+    try:
+        print(f"Loading {name} ...", end=' ', flush=True)
+        ret = np.load(f"var/{name}.npy")
+        print("Done!", flush=True)
+        return ret
+    except IOError:
+        print(f"{name} not found and now building {name} ...", end=' ', flush=True)
+        ret = func(*params)
+        print(f"saving to file ...", end=' ', flush=True)
+        np.save(f"var/{name}.npy", ret)
+        sio.savemat(f"var/{name}.mat", {name: ret})
+        print("Done!", flush=True)
+        return ret
+
+
+def builder(nmax, err, n1, n2, mu_range, ma):
+    hexagon_mf_bases = create("hexagon_mf_bases", func=build_hexagon_mf_basis, params=[nmax])
+    hexagon_mf_operators = create("hexagon_mf_operators", func=build_hexagon_mf_operator, params=[hexagon_mf_bases])
+    EVHexmin = []
+    # range setting of hopping strength
+    t_first, t_second = 0.2, 0.4
+    # ta-part1,near phase transition boundary, need to be calculated more densely
+    t_a = np.linspace(0, t_first, n1)
+    # tb-part2
+    t_b = np.linspace(t_first, t_second, n2)
+    tA = np.array([*t_a, *t_b])
+
+    # setting tunneling terms
+    # phase winding factor W
+    W = 2 * cmath.pi / 3
+    t0 = 1 + 0j
+    t1, t2, t3 = t0, t0 * cmath.exp(1j * W), t0 * cmath.exp(-1j * W)
+    t1_up, t2_up, t3_up = t1, t2, t3
+    t1_dn, t2_dn, t3_dn = t1_up.conjugate(), t2_up.conjugate(), t3_up.conjugate()
+    ts = np.array([t1_up, t1_dn, t2_up, t2_dn, t3_up, t3_dn])
+
+    # setting chemical potential
+    mu0 = 1
+    # the range of mu, chemical potential
+    Ma = np.linspace(-1, mu_range, ma)
+    len_ma = len(Ma)
+
+    # setting on-site interactions
+    # range of on-site of the two same pseudo-spin particles
+    U, U0 = 1, 1
+    # range of on-site interaction of the two different pseudo-spin particles, fix V first
+    V, V0 = 1, 1
+
+    # build Hamiltonian terms
+    u_term = create("u_term", func=build_u_term_mf_cluster, params=[hexagon_mf_bases, U0])
+    v_term = create("v_term", func=build_v_term_mf_cluster, params=[hexagon_mf_bases, V0])
+    mu_term = create("mu_term", func=build_mu_term_mf_cluster, params=[hexagon_mf_bases, mu0])
+    t_term = create("t_term", func=build_t_term_mf_cluster, params=[hexagon_mf_bases, ts])
+    var_terms = create("var_terms", func=build_var_terms, params=[hexagon_mf_bases, ts])
+
+    # build other vars
+    print("Building Other Terms ...", end=' ', flush=True)
+    dig_h = np.identity((nmax + 1) ** 12, dtype=complex)
+    toc1, toc2 = np.zeros(len_ma, dtype=complex), np.zeros(len_ma, dtype=complex)
+    T1, T2 = 0, 0
+    # the range of order parameters trial solution, the trial OrderParameter is Complex with Pa(i,j)=Pr*exp(i*theta)
+    Pr = np.linspace(0.01, cmath.sqrt(nmax), 10)
+    # tA has been handled before
+    # Psi1up, Psi1dn, Psi2up, Psi2dn ... Psi6up, Psi6dn
+    Psi_s = np.array([np.zeros((len_ma, n1 + n2), dtype=complex) for _ in range(0, 20)])
+    # N1up, ... N2dn, N1squareup, ... N2squaredn
+    Ns = np.array([np.zeros((len_ma, n1 + n2), dtype=complex) for _ in range(0, 8)])
+
+    print("Done!", flush=True)
+
+    return (nmax, hexagon_mf_bases, hexagon_mf_operators,
+            t_a, t_b, tA, ts, Ma,
+            u_term, v_term, mu_term, t_term, var_terms,
+            dig_h, toc1, toc2, T1, T2,
+            Pr, Psi_s, Ns, err)
