@@ -367,7 +367,7 @@ def create(name, func, params):
         ret = func(*params)
         print(f"saving to file ...", end=' ', flush=True)
         np.save(f"var/{name}.npy", ret)
-        sio.savemat(f"var/{name}.mat", {name: ret})
+        # sio.savemat(f"var/{name}.mat", {name: ret})
         print("Done!", flush=True)
         return ret
 
