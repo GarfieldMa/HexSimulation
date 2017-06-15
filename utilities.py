@@ -11,10 +11,10 @@ def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h,
     psi_dn_s = psi_s[1::2]
     psi_dn_s_shifted = np.roll(psi_dn_s, 3)
 
-    up_a_terms = var_terms[::4]
-    up_adg_terms = var_terms[1::4]
-    dn_a_terms = var_terms[2::4]
-    dn_adg_terms = var_terms[3::4]
+    up_a_terms = var_terms[:6]
+    up_adg_terms = var_terms[6:12]
+    dn_a_terms = var_terms[12:18]
+    dn_adg_terms = var_terms[18:]
 
     t_psi_var = t * (sum([np.conj(psi_up) * up_a_term for psi_up, up_a_term in zip(psi_up_s_shifted, up_a_terms)])
                      + sum([psi_up * up_adg_term for psi_up, up_adg_term in zip(psi_up_s_shifted, up_adg_terms)])

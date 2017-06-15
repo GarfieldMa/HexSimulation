@@ -1,7 +1,7 @@
 import numpy as np
 import cmath
 import scipy.io as sio
-
+from time import time
 
 def build_hexagon_mf_basis(nmax):
 
@@ -314,45 +314,49 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
 # build f1upa, f1upad, f1dna, f1dnad ...
 def build_var_terms(hexagon_mf_bases, ts):
     base_l = max(hexagon_mf_bases[0].shape)
+    # print(f"    base_l={base_l}")
     var_terms = np.array([np.zeros((base_l, base_l), dtype=complex) for _ in range(0, 24)])
     # reorder ts into t1up, t3up, t2up, t1up, t3up, t2up, t1dn, t3dn, t2dn, t1dn, t3dn, t2dn
     t_factors = [ts[0], ts[4], ts[2], ts[0], ts[4], ts[2], ts[1], ts[5], ts[3], ts[1], ts[5], ts[3]]
-
+    # t_lp_begin = time()
     for i in range(0, base_l):
-        ks = [k.flat[i] for k in hexagon_mf_bases]
+        ks = np.array([k.flat[i] for k in hexagon_mf_bases])
 
         for j in range(0, base_l):
-            ls = [l.flat[j] for l in hexagon_mf_bases]
+            ls = np.array([l.flat[j] for l in hexagon_mf_bases])
 
             # compare k1up, l1up ... k6dn, l6dn
-            cmp_results = [x == y for x, y in zip(ks, ls)]
-            if cmp_results.count(False) == 1:
-                idx = cmp_results.index(False)
+            cmp_results = np.where(np.not_equal(ks, ls))[0]
+            if cmp_results.shape[0] == 1:
+                idx = cmp_results[0]
                 if abs(ks[idx] - ls[idx]) == 1:
                     # condition for up_a_term
                     if idx % 2 == 0 and ks[idx] == ls[idx] - 1:
                         if idx % 4 == 0:
-                            var_terms[idx // 2] -= t_factors[idx // 2] * cmath.sqrt(ls[idx])
+                            var_terms[idx // 2][i, j] -= t_factors[idx // 2] * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[idx // 2] -= np.conj(t_factors[idx // 2]) * cmath.sqrt(ls[idx])
+                            var_terms[idx // 2][i, j] -= (t_factors[idx // 2].conj()) * cmath.sqrt(ls[idx])
                     # condition for up_adg_term
                     if idx % 2 == 0 and ks[idx] == ls[idx] + 1:
                         if idx % 4 == 0:
-                            var_terms[(idx // 2) + 6] -= np.conj(t_factors[idx // 2]) * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 6][i, j] -= (t_factors[idx // 2].conj()) * cmath.sqrt(ks[idx])
                         else:
-                            var_terms[(idx // 2) + 6] -= t_factors[idx // 2] * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 6][i, j] -= t_factors[idx // 2] * cmath.sqrt(ks[idx])
                     # condition for dn_a_term
                     if idx % 2 != 0 and ks[idx] == ls[idx] - 1:
                         if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 12] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 12][i, j] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[(idx // 2) + 12] -= np.conj(t_factors[(idx // 2) + 6]) * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 12][i, j] -= (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ls[idx])
                     # condition for dn_adg_term
                     if idx % 2 != 0 and ks[idx] == ls[idx] - 1:
                         if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 18] -= np.conj(t_factors[(idx // 2) + 6]) * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 18][i, j] -= (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ks[idx])
                         else:
-                            var_terms[(idx // 2) + 18] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 18][i, j] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ks[idx])
+        # if i % 100 == 0 and i != 0:
+            # print(f"        {i}-th loop completed within {time()-t_lp_begin} seconds")
+            # t_lp_begin = time()
 
     return var_terms
 
