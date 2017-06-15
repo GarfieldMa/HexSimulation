@@ -1,8 +1,11 @@
 import numpy as np
+import scipy.sparse as sparse
 import cmath
+from time import time
 
 
 def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts):
+    # t_begin = time()
     psi_up_s = psi_s[::2]
     psi_up_s_shifted = np.roll(psi_up_s, 3)
     psi_dn_s = psi_s[1::2]
@@ -31,26 +34,27 @@ def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h,
                           - np.real(np.conj(ts[1]) * (np.conj(psi_dn_s[3]) * psi_dn_s[0]))
                           - np.real(ts[5] * (np.conj(psi_dn_s[4]) * psi_dn_s[1]))
                           - np.real(np.conj(ts[3]) * (np.conj(psi_dn_s[5]) * psi_dn_s[2])))))
+    # print(f"            calculate hhexa within {time()-t_begin} seconds")
     return ret
 
 
 def update(h_hexa, hexagon_mf_operators, psi_s, err):
 
     def check(p, q):
-        r1, t1 = cmath.polar(q)
-        r2, t2 = cmath.polar(q)
-        check_phase = (abs(r1 - r2) <= err)
-        check_angle = (abs(t1 - t2) <= err * 0.1 or (cmath.pi <= abs(t1 - t2) <= (err * 0.1 + cmath.pi)))
-        return check_phase and check_angle
+        return abs(p-q) <= err
+        # r1, t1 = cmath.polar(p)
+        # r2, t2 = cmath.polar(q)
+        # check_phase = (abs(r1 - r2) <= err)
+        # check_angle = ((abs(t1 - t2) <= err * 0.1) or (cmath.pi <= abs(t1 - t2) <= (err * 0.1 + cmath.pi)))
+        # return check_phase and check_angle
 
-    d_hex, vec_hex = np.linalg.eig(h_hexa)
+    d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA')
     _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
     Phi_s = np.array([v_hex_min.dot(b.dot(v_hex_min)) for b in hexagon_mf_operators])
     phi_s = psi_s
 
     # value difference for designated order parameters with the trial solutions
-    # TODO: should also check angles
     is_self_consistent = np.all(np.array([check(phi, Phi) for phi, Phi in zip(phi_s, Phi_s)]))
 
     return is_self_consistent, Phi_s

@@ -188,12 +188,13 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
     t_terms = np.zeros((base_l, base_l), dtype=complex)
 
     for i in range(0, base_l):
-        ns = [k.flat[i] for k in hexagon_mf_bases]
+        ns = np.array([k.flat[i] for k in hexagon_mf_bases])
 
         # off-diagonal kinetic hopping part of Hamiltonian
         for j in range(0, base_l):
-            ls = [l.flat[i] for l in hexagon_mf_bases]
+            ls = np.array([l.flat[j] for l in hexagon_mf_bases])
 
+            # print("Stop!!")
             # spin-up intra-cluster tunneling terms terms ai^{dagger}aj
             # TODO: should be optimized later
             if ns[0] == ls[0] + 1 and ns[1] == ls[1] and ns[2] == ls[2] - 1 and ns[3] == ls[3] and\
@@ -321,7 +322,7 @@ def build_var_terms(hexagon_mf_bases, ts):
         ks = [k.flat[i] for k in hexagon_mf_bases]
 
         for j in range(0, base_l):
-            ls = [l.flat[i] for l in hexagon_mf_bases]
+            ls = [l.flat[j] for l in hexagon_mf_bases]
 
             # compare k1up, l1up ... k6dn, l6dn
             cmp_results = [x == y for x, y in zip(ks, ls)]
@@ -375,11 +376,11 @@ def create(name, func, params):
 def builder(nmax, err, n1, n2, mu_range, ma):
     hexagon_mf_bases = create("hexagon_mf_bases", func=build_hexagon_mf_basis, params=[nmax])
     hexagon_mf_operators = create("hexagon_mf_operators", func=build_hexagon_mf_operator, params=[hexagon_mf_bases])
-    EVHexmin = []
+    # EVHexmin = []
     # range setting of hopping strength
     t_first, t_second = 0.2, 0.4
     # ta-part1,near phase transition boundary, need to be calculated more densely
-    t_a = np.linspace(0, t_first, n1)
+    t_a = np.linspace(0.05, t_first, n1)
     # tb-part2
     t_b = np.linspace(t_first, t_second, n2)
     tA = np.array([*t_a, *t_b])
