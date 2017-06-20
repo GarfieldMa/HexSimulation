@@ -248,7 +248,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
         
         step=0;%if step>100,the self-consistency fails.
         while (dif1up>error)||(dif1dn>error)||(dif2up>error)||(dif2dn>error)||(dif3up>error)||(dif3dn>error)||(dif4up>error)||(dif4dn>error)||(dif5up>error)||(dif5dn>error)||(dif6up>error)||(dif6dn>error)
-           if step<100
+           if step<16
                
                psi1up=PHI1up;psi1dn=PHI1dn;
                psi2up=PHI2up;psi2dn=PHI2dn;

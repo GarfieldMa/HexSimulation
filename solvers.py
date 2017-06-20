@@ -83,22 +83,22 @@ def iterate(k, j, t, wall_time,
     # ret.append(v_hex_min.T.dot((hexagon_mf_operators[0] + hexagon_mf_operators[1]).dot(v_hex_min)))
     # ret.append(v_hex_min.T.dot((hexagon_mf_operators[2] + hexagon_mf_operators[3]).dot(v_hex_min)))
     # print(f"    Psi1up{j,k}={Psi_s[0][j, k]}", flush=True)
-    Psi_s[12][j, k] = v_hex_min.T.dot(hexagon_mf_operators[0].T.dot(hexagon_mf_operators[2].dot(v_hex_min)))
-    Psi_s[13][j, k] = v_hex_min.T.dot(hexagon_mf_operators[1].T.dot(hexagon_mf_operators[3].dot(v_hex_min)))
-    Psi_s[14][j, k] = v_hex_min.T.dot(hexagon_mf_operators[0].T.dot(hexagon_mf_operators[1].dot(v_hex_min)))
-    Psi_s[15][j, k] = v_hex_min.T.dot(hexagon_mf_operators[2].T.dot(hexagon_mf_operators[3].dot(v_hex_min)))
-    Psi_s[16][j, k] = v_hex_min.T.dot(hexagon_mf_operators[0].T.dot(hexagon_mf_operators[3].dot(v_hex_min)))
-    Psi_s[17][j, k] = v_hex_min.T.dot(hexagon_mf_operators[1].T.dot(hexagon_mf_operators[2].dot(v_hex_min)))
-    Psi_s[18][j, k] = v_hex_min.T.dot((hexagon_mf_operators[0] + hexagon_mf_operators[1]).dot(v_hex_min))
-    Psi_s[19][j, k] = v_hex_min.T.dot((hexagon_mf_operators[2] + hexagon_mf_operators[3]).dot(v_hex_min))
+    Psi_s[12][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[0].conj().T.dot(hexagon_mf_operators[2].dot(v_hex_min)))
+    Psi_s[13][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[1].conj().T.dot(hexagon_mf_operators[3].dot(v_hex_min)))
+    Psi_s[14][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[0].conj().T.dot(hexagon_mf_operators[1].dot(v_hex_min)))
+    Psi_s[15][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[2].conj().T.dot(hexagon_mf_operators[3].dot(v_hex_min)))
+    Psi_s[16][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[0].conj().T.dot(hexagon_mf_operators[3].dot(v_hex_min)))
+    Psi_s[17][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[1].conj().T.dot(hexagon_mf_operators[2].dot(v_hex_min)))
+    Psi_s[18][j, k] = v_hex_min.conj().T.dot((hexagon_mf_operators[0] + hexagon_mf_operators[1]).dot(v_hex_min))
+    Psi_s[19][j, k] = v_hex_min.conj().T.dot((hexagon_mf_operators[2] + hexagon_mf_operators[3]).dot(v_hex_min))
 
     for i in range(0, 4):
         # ret.append(v_hex_min.T.dot(hexagon_mf_operators[i].T.dot(hexagon_mf_operators[i].dot(v_hex_min))))
-        Ns[i][j, k] = v_hex_min.T.dot(hexagon_mf_operators[i].T.dot(hexagon_mf_operators[i].dot(v_hex_min)))
+        Ns[i][j, k] = v_hex_min.conj().T.dot(hexagon_mf_operators[i].conj().T.dot(hexagon_mf_operators[i].dot(v_hex_min)))
     for i in range(4, 8):
-        tmp = hexagon_mf_operators[i].T.dot(hexagon_mf_operators[i])
+        tmp = hexagon_mf_operators[i].conj().T.dot(hexagon_mf_operators[i])
         # ret.append(v_hex_min.T.dot(tmp.dot(tmp.dot(v_hex_min))))
-        Ns[i][j, k] = v_hex_min.T.dot(tmp.dot(tmp.dot(v_hex_min)))
+        Ns[i][j, k] = v_hex_min.conj().T.dot(tmp.dot(tmp.dot(v_hex_min)))
     print(f"{k}, {j} iteration finished in {time()-t_begin} seconds with Psi1up{j,k}={Psi_s[0][j, k]}", flush=True)
     # return j, k, ret
     return Psi_s, Ns
