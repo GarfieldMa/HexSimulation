@@ -47,7 +47,7 @@ def iterate(k, j, t, wall_time,
 
     # Values of Order parameters corresponding to the trial solution of ground state above
     # # value difference for designated order parameters with the trial solutions
-    is_self_consistent, Phi_s, avg_err, d_hex_min = update(h_hexa, hexagon_mf_operators, phi_s, err)
+    is_self_consistent, Phi_s, avg_err, d_hex_min, v_hex_min = update(h_hexa, hexagon_mf_operators, phi_s, err)
     print(f"    Initialization Complete within {time()-t_init_begin} seconds, d_hex_min={d_hex_min}, avg_err={avg_err}", flush=True)
 
     for lp in range(0, wall_time):
@@ -59,7 +59,7 @@ def iterate(k, j, t, wall_time,
         else:
             psi_s = Phi_s
             h_hexa = calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
-            is_self_consistent, Phi_s, avg_err, d_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
+            is_self_consistent, Phi_s, avg_err, d_hex_min, v_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
             print(f"    complete within {time()-t_lp_begin} seconds, avg_err={avg_err}, d_hex_min={d_hex_min}")
             # print(f"    hexa={h_hexa}, is_self_consistent={is_self_consistent}", flush=True)
 

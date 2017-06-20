@@ -53,7 +53,7 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
     d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
     d_hex_min, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
-    Phi_s = np.array([v_hex_min.dot(b.dot(v_hex_min)) for b in hexagon_mf_operators])
+    Phi_s = np.array([v_hex_min.getH().dot(b.dot(v_hex_min)) for b in hexagon_mf_operators])
     phi_s = psi_s
 
     # value difference for designated order parameters with the trial solutions
@@ -61,4 +61,4 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
 
     avg_error = np.sum(np.absolute(phi_s - Phi_s)) / phi_s.shape[0]
 
-    return is_self_consistent, Phi_s, avg_error, d_hex_min
+    return is_self_consistent, Phi_s, avg_error, d_hex_min, v_hex_min
