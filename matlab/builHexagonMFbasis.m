@@ -1,5 +1,5 @@
 function [K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn]=builHexagonMFbasis(Nmax)%"up" ("down") is for Boson pseudospin
-NN=(Nmax+1)*(Nmax+1)*(Nmax+1)*(Nmax+1);%dimension of the basis state, as well as the Hilbert space
+NN=(Nmax+1)^12;%dimension of the basis state, as well as the Hilbert space
 K1up=zeros(NN,1); K1dn=zeros(NN,1);K2up=zeros(NN,1); K2dn=zeros(NN,1);
 K3up=zeros(NN,1); K3dn=zeros(NN,1);K4up=zeros(NN,1); K4dn=zeros(NN,1);
 K5up=zeros(NN,1); K5dn=zeros(NN,1);K6up=zeros(NN,1); K6dn=zeros(NN,1);

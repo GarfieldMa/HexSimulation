@@ -13,9 +13,9 @@ Nmax=1;
 
 EVHexmin=[];
 %range setting of hopping strength 
-tfirst=0.2;tsecond=0.4;n1=20;n2=20;
+tfirst=0.2;tsecond=0.4;n1=3;n2=3;
 tA=[];
-ta=linspace(0,tfirst,n1);%ta-part1,near phase transition boundary, need to be calculated more densely;
+ta=linspace(0.05,tfirst,n1);%ta-part1,near phase transition boundary, need to be calculated more densely;
 tb=linspace(tfirst,tsecond,n2);%tb-part2
 
 
@@ -39,8 +39,8 @@ t3dn=conj(t3up);
 
 %setting chemical potential
 mu0=1;
-murange=4;
-Ma=linspace(-1,murange,30);%the range of mu, chemical potential
+murange=1.5;
+Ma=linspace(-0.5,1.5,5);%the range of mu, chemical potential
 
 %setting on-site interactions
 %range of on-site interaction of the two same pseudospin particles, fix U first
@@ -150,7 +150,7 @@ t=ta(k);
 
 for j=1:length(Ma)
 		tic; mu=Ma(j);
-%initial Dmin£¬Dmin is the minimum of eigenvalue
+%initial Dminï¿½ï¿½Dmin is the minimum of eigenvalue
         DHexmin=1.0e5;
 		for lp=1:length(Pr)
 %             for lpp=1:length(theta)
@@ -239,12 +239,12 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
     PHI6up=VHexmin'*b6up*VHexmin;PHI6dn=VHexmin'*b6dn*VHexmin;
 
   %value difference for designated order parameters with the trial solutions
-        dif1up=abs(abs(phi1up)-abs(PHI1up));dif1dn=abs(abs(phi1dn)-abs(PHI1dn));
-        dif2up=abs(abs(phi2up)-abs(PHI2up));dif2dn=abs(abs(phi2dn)-abs(PHI2dn));
-        dif3up=abs(abs(phi3up)-abs(PHI3up));dif3dn=abs(abs(phi3dn)-abs(PHI3dn));
-        dif4up=abs(abs(phi4up)-abs(PHI4up));dif4dn=abs(abs(phi4dn)-abs(PHI4dn));
-        dif5up=abs(abs(phi5up)-abs(PHI5up));dif5dn=abs(abs(phi5dn)-abs(PHI5dn));
-        dif6up=abs(abs(phi6up)-abs(PHI6up));dif6dn=abs(abs(phi6dn)-abs(PHI6dn));
+        dif1up=abs(phi1up-PHI1up);dif1dn=abs(phi1dn-PHI1dn);
+        dif2up=abs(phi2up-PHI2up);dif2dn=abs(phi2dn-PHI2dn);
+        dif3up=abs(phi3up-PHI3up);dif3dn=abs(phi3dn-PHI3dn);
+        dif4up=abs(phi4up-PHI4up);dif4dn=abs(phi4dn-PHI4dn);
+        dif5up=abs(phi5up-PHI5up);dif5dn=abs(phi5dn-PHI5dn);
+        dif6up=abs(phi6up-PHI6up);dif6dn=abs(phi6dn-PHI6dn);
         
         step=0;%if step>100,the self-consistency fails.
         while (dif1up>error)||(dif1dn>error)||(dif2up>error)||(dif2dn>error)||(dif3up>error)||(dif3dn>error)||(dif4up>error)||(dif4dn>error)||(dif5up>error)||(dif5dn>error)||(dif6up>error)||(dif6dn>error)
@@ -309,12 +309,12 @@ VHexmin=VHex0;
             phi6up=psi6up;
             phi6dn=psi6dn;
                         
-        dif1up=abs(abs(phi1up)-abs(PHI1up));dif1dn=abs(abs(phi1dn)-abs(PHI1dn));
-        dif2up=abs(abs(phi2up)-abs(PHI2up));dif2dn=abs(abs(phi2dn)-abs(PHI2dn));
-        dif3up=abs(abs(phi3up)-abs(PHI3up));dif3dn=abs(abs(phi3dn)-abs(PHI3dn));
-        dif4up=abs(abs(phi4up)-abs(PHI4up));dif4dn=abs(abs(phi4dn)-abs(PHI4dn));
-        dif5up=abs(abs(phi5up)-abs(PHI5up));dif5dn=abs(abs(phi5dn)-abs(PHI5dn));
-        dif6up=abs(abs(phi6up)-abs(PHI6up));dif6dn=abs(abs(phi6dn)-abs(PHI6dn));
+        dif1up=abs(phi1up-PHI1up);dif1dn=abs(phi1dn-PHI1dn);
+        dif2up=abs(phi2up-PHI2up);dif2dn=abs(phi2dn-PHI2dn);
+        dif3up=abs(phi3up-PHI3up);dif3dn=abs(phi3dn-PHI3dn);
+        dif4up=abs(phi4up-PHI4up);dif4dn=abs(phi4dn-PHI4dn);
+        dif5up=abs(phi5up-PHI5up);dif5dn=abs(phi5dn-PHI5dn);
+        dif6up=abs(phi6up-PHI6up);dif6dn=abs(phi6dn-PHI6dn);
         
             step=step+1;
            else
@@ -322,7 +322,7 @@ VHexmin=VHex0;
                               PHI2up=NaN;
                break
            end
-        end %after the self-cosistency judgement£¬get the the  optimal value
+        end %after the self-cosistency judgementï¿½ï¿½get the the  optimal value
         
         
         PHI12up=VHexmin'*b1up'*b2up*VHexmin; PHI12dn=VHexmin'*b1dn'*b2dn*VHexmin;
@@ -347,8 +347,8 @@ VHexmin=VHex0;
         
         
          
- %save the final optimal value of both order parameters£¬also save the
- %corresponding state£¨eigenvector£©
+ %save the final optimal value of both order parametersï¿½ï¿½also save the
+ %corresponding stateï¿½ï¿½eigenvectorï¿½ï¿½
 		EVHexmin=[EVHexmin,VHexmin]; 
         Psi1up(j,k)=PHI1up; Psi1dn(j,k)=PHI1dn;
         Psi2up(j,k)=PHI2up; Psi2dn(j,k)=PHI2dn;
@@ -389,7 +389,7 @@ t=tb(k-La);
 
 for j=1:length(Ma)
 		tic; mu=Ma(j);
-%initial Dmin£¬Dmin is the minimum of eigenvalue
+%initial Dminï¿½ï¿½Dmin is the minimum of eigenvalue
         DHexmin=1.0e5;
 		for lp=1:length(Pr)
 %             for lpp=1:length(theta)
@@ -478,12 +478,12 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
     PHI6up=VHexmin'*b6up*VHexmin;PHI6dn=VHexmin'*b6dn*VHexmin;
 
   %value difference for designated order parameters with the trial solutions
-        dif1up=abs(abs(phi1up)-abs(PHI1up));dif1dn=abs(abs(phi1dn)-abs(PHI1dn));
-        dif2up=abs(abs(phi2up)-abs(PHI2up));dif2dn=abs(abs(phi2dn)-abs(PHI2dn));
-        dif3up=abs(abs(phi3up)-abs(PHI3up));dif3dn=abs(abs(phi3dn)-abs(PHI3dn));
-        dif4up=abs(abs(phi4up)-abs(PHI4up));dif4dn=abs(abs(phi4dn)-abs(PHI4dn));
-        dif5up=abs(abs(phi5up)-abs(PHI5up));dif5dn=abs(abs(phi5dn)-abs(PHI5dn));
-        dif6up=abs(abs(phi6up)-abs(PHI6up));dif6dn=abs(abs(phi6dn)-abs(PHI6dn));
+        dif1up=abs(phi1up-PHI1up);dif1dn=abs(phi1dn-PHI1dn);
+        dif2up=abs(phi2up-PHI2up);dif2dn=abs(phi2dn-PHI2dn);
+        dif3up=abs(phi3up-PHI3up);dif3dn=abs(phi3dn-PHI3dn);
+        dif4up=abs(phi4up-PHI4up);dif4dn=abs(phi4dn-PHI4dn);
+        dif5up=abs(phi5up-PHI5up);dif5dn=abs(phi5dn-PHI5dn);
+        dif6up=abs(phi6up-PHI6up);dif6dn=abs(phi6dn-PHI6dn);
         
         step=0;%if step>100,the self-consistency fails.
         while (dif1up>error)||(dif1dn>error)||(dif2up>error)||(dif2dn>error)||(dif3up>error)||(dif3dn>error)||(dif4up>error)||(dif4dn>error)||(dif5up>error)||(dif5dn>error)||(dif6up>error)||(dif6dn>error)
@@ -548,12 +548,12 @@ VHexmin=VHex0;
             phi6up=psi6up;
             phi6dn=psi6dn;
                         
-        dif1up=abs(abs(phi1up)-abs(PHI1up));dif1dn=abs(abs(phi1dn)-abs(PHI1dn));
-        dif2up=abs(abs(phi2up)-abs(PHI2up));dif2dn=abs(abs(phi2dn)-abs(PHI2dn));
-        dif3up=abs(abs(phi3up)-abs(PHI3up));dif3dn=abs(abs(phi3dn)-abs(PHI3dn));
-        dif4up=abs(abs(phi4up)-abs(PHI4up));dif4dn=abs(abs(phi4dn)-abs(PHI4dn));
-        dif5up=abs(abs(phi5up)-abs(PHI5up));dif5dn=abs(abs(phi5dn)-abs(PHI5dn));
-        dif6up=abs(abs(phi6up)-abs(PHI6up));dif6dn=abs(abs(phi6dn)-abs(PHI6dn));
+        dif1up=abs(phi1up-PHI1up);dif1dn=abs(phi1dn-PHI1dn);
+        dif2up=abs(phi2up-PHI2up);dif2dn=abs(phi2dn-PHI2dn);
+        dif3up=abs(phi3up-PHI3up);dif3dn=abs(phi3dn-PHI3dn);
+        dif4up=abs(phi4up-PHI4up);dif4dn=abs(phi4dn-PHI4dn);
+        dif5up=abs(phi5up-PHI5up);dif5dn=abs(phi5dn-PHI5dn);
+        dif6up=abs(phi6up-PHI6up);dif6dn=abs(phi6dn-PHI6dn);
         
             step=step+1;
            else
@@ -561,7 +561,7 @@ VHexmin=VHex0;
                               PHI2up=NaN;
                break
            end
-        end %after the self-cosistency judgement£¬get the the  optimal value
+        end %after the self-cosistency judgementï¿½ï¿½get the the  optimal value
         
         
         PHI12up=VHexmin'*b1up'*b2up*VHexmin; PHI12dn=VHexmin'*b1dn'*b2dn*VHexmin;
@@ -586,8 +586,8 @@ VHexmin=VHex0;
         
         
          
- %save the final optimal value of both order parameters£¬also save the
- %corresponding state£¨eigenvector£©
+ %save the final optimal value of both order parametersï¿½ï¿½also save the
+ %corresponding stateï¿½ï¿½eigenvectorï¿½ï¿½
 		EVHexmin=[EVHexmin,VHexmin]; 
         Psi1up(j,k)=PHI1up; Psi1dn(j,k)=PHI1dn;
         Psi2up(j,k)=PHI2up; Psi2dn(j,k)=PHI2dn;

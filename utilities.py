@@ -48,8 +48,10 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
         # check_angle = ((abs(t1 - t2) <= err * 0.1) or (cmath.pi <= abs(t1 - t2) <= (err * 0.1 + cmath.pi)))
         # return check_phase and check_angle
 
-    d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA')
-    _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
+    # d_hex, vec_hex = np.linalg.eig(h_hexa)
+    # d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA')
+    d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
+    d_hex_min, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
     Phi_s = np.array([v_hex_min.dot(b.dot(v_hex_min)) for b in hexagon_mf_operators])
     phi_s = psi_s
@@ -57,4 +59,6 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
     # value difference for designated order parameters with the trial solutions
     is_self_consistent = np.all(np.array([check(phi, Phi) for phi, Phi in zip(phi_s, Phi_s)]))
 
-    return is_self_consistent, Phi_s
+    avg_error = np.sum(np.absolute(phi_s - Phi_s)) / phi_s.shape[0]
+
+    return is_self_consistent, Phi_s, avg_error, d_hex_min

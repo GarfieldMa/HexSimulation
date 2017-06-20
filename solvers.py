@@ -31,12 +31,15 @@ def iterate(k, j, t, wall_time,
         # solve the Hamilton with Eigenvectors and Eigenvalues
         # python returns array of Eigenvalues and normalized Eigenvectors
         # t_svd_begin = time()
-        d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA')
+        # d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA')
+        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
+        # d_hex, vec_hex = np.linalg.eig(h_hexa)
         # print(f"            solve eig within {time()-t_svd_begin} seconds")
         d_hex0, v_hex0 = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
         # find phi1up(down)---the trial solution corresponding to the lowest eigenvalues of Hsite
-        if d_hex0 < d_hex_min and abs(d_hex0 - d_hex_min) > 0.01:
+        # if d_hex0 < d_hex_min and abs(d_hex0 - d_hex_min) > 0.01:
+        if d_hex0 < d_hex_min:
             # due to the precision of floating number,
             # print(f"    update with d_hex_min={d_hex0} and v_hex_min={v_hex0}", flush=True)
             d_hex_min, v_hex_min = d_hex0, v_hex0
@@ -44,8 +47,8 @@ def iterate(k, j, t, wall_time,
 
     # Values of Order parameters corresponding to the trial solution of ground state above
     # # value difference for designated order parameters with the trial solutions
-    is_self_consistent, Phi_s = update(h_hexa, hexagon_mf_operators, phi_s, err)
-    print(f"    Initialization Complete within {time()-t_init_begin} seconds, d_hex_min={d_hex_min}", flush=True)
+    is_self_consistent, Phi_s, avg_err, d_hex_min = update(h_hexa, hexagon_mf_operators, phi_s, err)
+    print(f"    Initialization Complete within {time()-t_init_begin} seconds, d_hex_min={d_hex_min}, avg_err={avg_err}", flush=True)
 
     for lp in range(0, wall_time):
         t_lp_begin = time()
@@ -56,8 +59,8 @@ def iterate(k, j, t, wall_time,
         else:
             psi_s = Phi_s
             h_hexa = calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
-            is_self_consistent, Phi_s = update(h_hexa, hexagon_mf_operators, psi_s, err)
-            print(f"    complete within {time()-t_lp_begin} seconds")
+            is_self_consistent, Phi_s, avg_err, d_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
+            print(f"    complete within {time()-t_lp_begin} seconds, avg_err={avg_err}, d_hex_min={d_hex_min}")
             # print(f"    hexa={h_hexa}, is_self_consistent={is_self_consistent}", flush=True)
 
     if not is_self_consistent:
@@ -105,8 +108,8 @@ def solves_part(nmax, hexagon_mf_bases, hexagon_mf_operators,
                 start_t, stop_t, tA, ts, Ma,
                 u_term, v_term, mu_term, t_term, var_terms,
                 dig_h, toc1, toc2, T1, T2,
-                Pr, Psi_s, Ns, err):
-    wall_time = 100
+                Pr, Psi_s, Ns, err, wall_time):
+    # wall_time = 50
     start, stop = len(start_t), len(stop_t)
     for k in range(start, start + stop):
 
@@ -136,18 +139,18 @@ def solves(nmax, hexagon_mf_bases, hexagon_mf_operators,
            t_a, t_b, tA, ts, Ma,
            u_term, v_term, mu_term, t_term, var_terms,
            dig_h, toc1, toc2, T1, T2,
-           Pr, Psi_s, Ns, err):
+           Pr, Psi_s, Ns, err, wall_time):
     # print("part one")
     Psi_s, Ns = solves_part(nmax, hexagon_mf_bases, hexagon_mf_operators,
                             [], t_a, tA, ts, Ma,
                             u_term, v_term, mu_term, t_term, var_terms,
                             dig_h, toc1, toc2, T1, T2,
-                            Pr, Psi_s, Ns, err)
+                            Pr, Psi_s, Ns, err, wall_time)
     # print("part two")
     Psi_s, Ns = solves_part(nmax, hexagon_mf_bases, hexagon_mf_operators,
                             t_a, t_b, tA, ts, Ma,
                             u_term, v_term, mu_term, t_term, var_terms,
                             dig_h, toc1, toc2, T1, T2,
-                            Pr, Psi_s, Ns, err)
+                            Pr, Psi_s, Ns, err, wall_time)
     return Psi_s, Ns
 
