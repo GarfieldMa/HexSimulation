@@ -327,7 +327,7 @@ def builder(nmax, t_first, t_second,
     # range setting of hopping strength
     # t_first, t_second = 0.2, 0.4
     # ta-part1,near phase transition boundary, need to be calculated more densely
-    t_a = np.linspace(0.05, t_first, n1)
+    t_a = np.linspace(0, t_first, n1)
     # tb-part2
     t_b = np.linspace(t_first, t_second, n2)
     tA = np.array([*t_a, *t_b])
@@ -351,7 +351,7 @@ def builder(nmax, t_first, t_second,
     # range of on-site of the two same pseudo-spin particles
     U, U0 = 1, 1
     # range of on-site interaction of the two different pseudo-spin particles, fix V first
-    V, V0 = 1, 1
+    V, V0 = 0.25, 0.25
 
     # build Hamiltonian terms
     u_term = create("u_term", func=build_u_term_mf_cluster, params=[hexagon_mf_bases, U0])
