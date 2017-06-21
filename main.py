@@ -1,26 +1,15 @@
-import numpy as np
-import scipy.io as sio
-
 from builders import builder
 from solvers import solves
+from utilities import load_params, dump_result
 
-from scipy.misc import toimage
 
 if __name__ == '__main__':
-    (nmax, hexagon_mf_bases, hexagon_mf_operators,
-     t_a, t_b, tA, ts, Ma,
-     u_term, v_term, mu_term, t_term, var_terms,
-     dig_h, toc1, toc2, T1, T2,
-     Pr, Psi_s, Ns, err, wall_time) = builder(nmax=1, t_first=0.2, t_second=0.4,
-                                              err=1.0e-5, n1=15, n2=8, mu_range=1.5, ma=12, wall_time=10)
-
-    Psi_s, Ns = solves(nmax, hexagon_mf_bases, hexagon_mf_operators,
-                       t_a, t_b, tA, ts, Ma,
-                       u_term, v_term, mu_term, t_term, var_terms,
-                       dig_h, toc1, toc2, T1, T2,
-                       Pr, Psi_s, Ns, err, wall_time)
-
-    np.save("result", Psi_s)
-    sio.savemat("result.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2],
-                               "Psi2dn": Psi_s[3], "Psi1updn": Psi_s[14], "Psi12up": Psi_s[12],
-                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18]})
+    params = load_params("params.json")
+    terms = builder(nmax=params['nmax'], t_lower_bound=params['t_lower_bound'], t_pivot=params['t_pivot'], t_upper_bound=params['t_upper_bound'],
+                    n1=params['n1'], n2=params['n2'], U=params['U'], V=params['V'], MU=params['MU'], W=params['W'],
+                    mu_lower_bound=params['mu_lower_bound'], mu_upper_bound=params['mu_upper_bound'], ma=params['ma'], cached=params['cached'])
+    result = solves(hexagon_mf_operators=terms['hexagon_mf_operators'], t_a=terms['t_a'], t_b=terms['t_b'],
+                    ts=terms['ts'], Ma=terms['Ma'], u_term=terms['u_term'], v_term=terms['v_term'], mu_term=terms['mu_term'],
+                    t_term=terms['t_term'], var_terms=terms['var_terms'], dig_h=terms['dig_h'], Pr=terms['Pr'],
+                    Psi_s=terms['Psi_s'], Ns=terms['Ns'], err=params['err'], wall_time=params['wall_time'])
+    dump_result(Psi_s=result['Psi_s'], Ns=result['Ns'], params=params)

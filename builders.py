@@ -1,7 +1,6 @@
 import numpy as np
 import cmath
-import scipy.io as sio
-from time import time
+import os
 
 
 def build_hexagon_mf_basis(nmax):
@@ -140,127 +139,14 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
                             t_term[i, j] -= np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx1] * ls[idx0])
                         else:
                             t_term[i, j] -= ts_shifted[idx0] * cmath.sqrt(ks[idx1] * ls[idx0])
-            #     if abs(ks[idx] - ls[idx]) == 1:
-            # spin-up intra-cluster tunneling terms terms ai^{dagger}aj
-            # if ns[0] == ls[0] + 1 and ns[1] == ls[1] and ns[2] == ls[2] - 1 and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[2].conjugate() * cmath.sqrt(ns[0] * ls[2])
-            # if ns[0] == ls[0] - 1 and ns[1] == ls[1] and ns[2] == ls[2] + 1 and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[2] * cmath.sqrt(ns[2] * ls[0])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] + 1 and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] - 1 and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[0] * cmath.sqrt(ns[2] * ls[4])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] - 1 and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] + 1 and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[0].conjugate() * cmath.sqrt(ns[4] * ls[2])
-            #
-            # if ns[0] == ls[0]-1 and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10]+1 and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[4] * cmath.sqrt(ns[10] * ls[0])
-            # if ns[0] == ls[0]+1 and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10]-1 and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[4].conjugate() * cmath.sqrt(ns[0] * ls[10])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10]-1 and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[0] * cmath.sqrt(ns[8] * ls[10])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10]+1 and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[0].conjugate() * cmath.sqrt(ns[10] * ls[8])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6]+1 and ns[7] == ls[7] and\
-            #         ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[2] * cmath.sqrt(ns[6] * ls[8])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6]-1 and ns[7] == ls[7] and\
-            #         ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[2].conjugate() * cmath.sqrt(ns[8] * ls[6])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4]+1 and ns[5] == ls[5] and ns[6] == ls[6]-1 and ns[7] == ls[7] and\
-            #         ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[4] * cmath.sqrt(ns[4] * ls[6])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4]-1 and ns[5] == ls[5] and ns[6] == ls[6]+1 and ns[7] == ls[7] and\
-            #         ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[4].conjugate() * cmath.sqrt(ns[6] * ls[4])
-            #
-            # # spin-dn intra-cluster tunneling terms ai^{dagger}aj
-            # if ns[0] == ls[0] and ns[1] == ls[1]+1 and ns[2] == ls[2] and ns[3] == ls[3]-1 and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[3].conjugate() * cmath.sqrt(ns[1] * ls[3])
-            # if ns[0] == ls[0] and ns[1] == ls[1]-1 and ns[2] == ls[2] and ns[3] == ls[3]+1 and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[3] * cmath.sqrt(ns[3] * ls[1])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3]+1 and\
-            #     ns[4] == ls[4] and ns[5] == ls[5]-1 and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[1] * cmath.sqrt(ns[3] * ls[5])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3]-1 and\
-            #     ns[4] == ls[4] and ns[5] == ls[5]+1 and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[1].conjugate() * cmath.sqrt(ns[5] * ls[3])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1]-1 and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]+1:
-            #     t_terms[i, j] -= ts[5] * cmath.sqrt(ns[11] * ls[1])
-            # if ns[0] == ls[0] and ns[1] == ls[1]+1 and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]-1:
-            #     t_terms[i, j] -= ts[5].conjugate() * cmath.sqrt(ns[1] * ls[11])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9]+1 and ns[10] == ls[10] and ns[11] == ls[11]-1:
-            #     t_terms[i, j] -= ts[1].conjugate() * cmath.sqrt(ns[9] * ls[11])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7] and\
-            #         ns[8] == ls[8] and ns[9] == ls[9]-1 and ns[10] == ls[10] and ns[11] == ls[11]+1:
-            #     t_terms[i, j] -= ts[1] * cmath.sqrt(ns[11] * ls[9])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7]+1 and\
-            #         ns[8] == ls[8] and ns[9] == ls[9]-1 and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[3] * cmath.sqrt(ns[7] * ls[9])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5] and ns[6] == ls[6] and ns[7] == ls[7]-1 and\
-            #         ns[8] == ls[8] and ns[9] == ls[9]+1 and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[3].conjugate() * cmath.sqrt(ns[9] * ls[7])
-            #
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4] and ns[5] == ls[5]+1 and ns[6] == ls[6] and ns[7] == ls[7]-1 and\
-            #         ns[8] == ls[8]+1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[5].conjugate() * cmath.sqrt(ns[5] * ls[7])
-            # if ns[0] == ls[0] and ns[1] == ls[1] and ns[2] == ls[2] and ns[3] == ls[3] and\
-            #     ns[4] == ls[4]-1 and ns[5] == ls[5]-1 and ns[6] == ls[6] and ns[7] == ls[7]+1 and\
-            #         ns[8] == ls[8]-1 and ns[9] == ls[9] and ns[10] == ls[10] and ns[11] == ls[11]:
-            #     t_terms[i, j] -= ts[5] * cmath.sqrt(ns[7] * ls[5])
-
     return t_term
 
 
 def build_var_terms(hexagon_mf_bases, ts):
     base_l = max(hexagon_mf_bases[0].shape)
-    # print(f"    base_l={base_l}")
     var_terms = np.array([np.zeros((base_l, base_l), dtype=complex) for _ in range(0, 24)])
     # reorder ts into t1up, t3up, t2up, t1up, t3up, t2up, t1dn, t3dn, t2dn, t1dn, t3dn, t2dn
     t_factors = [ts[0], ts[4], ts[2], ts[0], ts[4], ts[2], ts[1], ts[5], ts[3], ts[1], ts[5], ts[3]]
-    # t_lp_begin = time()
     for i in range(0, base_l):
         ks = np.array([k.flat[i] for k in hexagon_mf_bases])
 
@@ -296,75 +182,69 @@ def build_var_terms(hexagon_mf_bases, ts):
                             var_terms[(idx // 2) + 18][i, j] -= (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ks[idx])
                         else:
                             var_terms[(idx // 2) + 18][i, j] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ks[idx])
-        # if i % 100 == 0 and i != 0:
-            # print(f"        {i}-th loop completed within {time()-t_lp_begin} seconds")
-            # t_lp_begin = time()
 
     return var_terms
 
 
-def create(name, func, params):
-    try:
-        print(f"Loading {name} ...", end=' ', flush=True)
-        ret = np.load(f"var/{name}.npy")
-        print("Done!", flush=True)
-        return ret
-    except IOError:
-        print(f"{name} not found and now building {name} ...", end=' ', flush=True)
+def create(name, func, params, cached=False):
+    if not os.path.exists("var/"):
+        os.makedirs("var/")
+    if cached:
+        try:
+            print(f"Loading {name} ...", end=' ', flush=True)
+            ret = np.load(f"var/{name}.npy")
+            print("Done!", flush=True)
+            return ret
+        except IOError:
+            print(f"{name} not found and now building {name} ...", end=' ', flush=True)
+            ret = func(*params)
+            print(f"saving to file ...", end=' ', flush=True)
+            np.save(f"var/{name}.npy", ret)
+            print("Done!", flush=True)
+            return ret
+    else:
+        print(f"Building {name} ...", end=' ', flush=True)
         ret = func(*params)
         print(f"saving to file ...", end=' ', flush=True)
         np.save(f"var/{name}.npy", ret)
-        # sio.savemat(f"var/{name}.mat", {name: ret})
         print("Done!", flush=True)
         return ret
 
 
-def builder(nmax, t_first, t_second,
-            err, n1, n2, mu_range, ma, wall_time):
-    hexagon_mf_bases = create("hexagon_mf_bases", func=build_hexagon_mf_basis, params=[nmax])
-    hexagon_mf_operators = create("hexagon_mf_operators", func=build_hexagon_mf_operator, params=[hexagon_mf_bases])
-    # EVHexmin = []
+def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
+            U, V, MU, W, mu_lower_bound, mu_upper_bound, ma,
+            cached=False):
+    hexagon_mf_bases = create("hexagon_mf_bases", func=build_hexagon_mf_basis, params=[nmax], cached=cached)
+    hexagon_mf_operators = create("hexagon_mf_operators", func=build_hexagon_mf_operator, params=[hexagon_mf_bases], cached=cached)
+
     # range setting of hopping strength
-    # t_first, t_second = 0.2, 0.4
     # ta-part1,near phase transition boundary, need to be calculated more densely
-    t_a = np.linspace(0, t_first, n1)
+    t_a = np.linspace(t_lower_bound, t_pivot, n1)
     # tb-part2
-    t_b = np.linspace(t_first, t_second, n2)
-    tA = np.array([*t_a, *t_b])
+    t_b = np.linspace(t_pivot, t_upper_bound, n2)
 
     # setting tunneling terms
     # phase winding factor W
-    W = 2 * cmath.pi / 3
     t0 = 1 + 0j
     t1, t2, t3 = t0, t0 * cmath.exp(1j * W), t0 * cmath.exp(-1j * W)
     t1_up, t2_up, t3_up = t1, t2, t3
     t1_dn, t2_dn, t3_dn = t1_up.conjugate(), t2_up.conjugate(), t3_up.conjugate()
     ts = np.array([t1_up, t1_dn, t2_up, t2_dn, t3_up, t3_dn])
 
-    # setting chemical potential
-    mu0 = 1
     # the range of mu, chemical potential
-    Ma = np.linspace(-0.5, mu_range, ma)
+    Ma = np.linspace(mu_lower_bound, mu_upper_bound, ma)
     len_ma = len(Ma)
 
-    # setting on-site interactions
-    # range of on-site of the two same pseudo-spin particles
-    U, U0 = 1, 1
-    # range of on-site interaction of the two different pseudo-spin particles, fix V first
-    V, V0 = 0.25, 0.25
-
     # build Hamiltonian terms
-    u_term = create("u_term", func=build_u_term_mf_cluster, params=[hexagon_mf_bases, U0])
-    v_term = create("v_term", func=build_v_term_mf_cluster, params=[hexagon_mf_bases, V0])
-    mu_term = create("mu_term", func=build_mu_term_mf_cluster, params=[hexagon_mf_bases, mu0])
-    t_term = create("t_term", func=build_t_term_mf_cluster, params=[hexagon_mf_bases, ts])
-    var_terms = create("var_terms", func=build_var_terms, params=[hexagon_mf_bases, ts])
+    u_term = create("u_term", func=build_u_term_mf_cluster, params=[hexagon_mf_bases, U], cached=cached)
+    v_term = create("v_term", func=build_v_term_mf_cluster, params=[hexagon_mf_bases, V], cached=cached)
+    mu_term = create("mu_term", func=build_mu_term_mf_cluster, params=[hexagon_mf_bases, MU], cached=cached)
+    t_term = create("t_term", func=build_t_term_mf_cluster, params=[hexagon_mf_bases, ts], cached=cached)
+    var_terms = create("var_terms", func=build_var_terms, params=[hexagon_mf_bases, ts], cached=cached)
 
     # build other vars
-    print("Building Other Terms ...", end=' ', flush=True)
+    print("Building other terms ...", end=' ', flush=True)
     dig_h = np.identity((nmax + 1) ** 12, dtype=complex)
-    toc1, toc2 = np.zeros(len_ma, dtype=complex), np.zeros(len_ma, dtype=complex)
-    T1, T2 = 0, 0
     # the range of order parameters trial solution, the trial OrderParameter is Complex with Pa(i,j)=Pr*exp(i*theta)
     Pr = np.linspace(0.01, cmath.sqrt(nmax), 10)
     # tA has been handled before
@@ -375,8 +255,7 @@ def builder(nmax, t_first, t_second,
 
     print("Done!", flush=True)
 
-    return (nmax, hexagon_mf_bases, hexagon_mf_operators,
-            t_a, t_b, tA, ts, Ma,
-            u_term, v_term, mu_term, t_term, var_terms,
-            dig_h, toc1, toc2, T1, T2,
-            Pr, Psi_s, Ns, err, wall_time)
+    return {"hexagon_mf_operators": hexagon_mf_operators,
+            't_a': t_a, 't_b': t_b, 'ts': ts, 'Ma': Ma,
+            'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term, 'var_terms': var_terms,
+            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns}
