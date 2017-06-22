@@ -18,11 +18,10 @@ def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h,
     dn_a_terms = var_terms[12:18]
     dn_adg_terms = var_terms[18:]
 
-    t_psi_var = t * (sum([np.conj(psi_up) * up_a_term for psi_up, up_a_term in zip(psi_up_s_shifted, up_a_terms)])
-                     + sum([psi_up * up_adg_term for psi_up, up_adg_term in zip(psi_up_s_shifted, up_adg_terms)])
-                     + sum([np.conj(psi_dn) * dn_a_term for psi_dn, dn_a_term in zip(psi_dn_s_shifted, dn_a_terms)])
-                     + sum([psi_dn * dn_adg_term for psi_dn, dn_adg_term in zip(psi_dn_s_shifted, dn_adg_terms)]))
-    ret = t_psi_var
+    ret = t * (np.conj(psi_up_s_shifted).dot(up_a_terms)
+               + psi_up_s_shifted.dot(up_adg_terms)
+               + np.conj(psi_dn_s_shifted).dot(dn_a_terms)
+               + psi_dn_s_shifted.dot(dn_adg_terms))
     ret += (t * t_term + u_term + v_term + mu * mu_term)
     ret += (t * dig_h * ((- np.real(ts[0] * (np.conj(psi_up_s[0]) * psi_up_s[3]))
                           - np.real(np.conj(ts[4]) * (np.conj(psi_up_s[1]) * psi_up_s[4]))
@@ -40,24 +39,17 @@ def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h,
 
 
 def update(h_hexa, hexagon_mf_operators, psi_s, err):
-
-    def check(p, q):
-        return abs(p-q) <= err
-
-    # d_hex, vec_hex = np.linalg.eig(h_hexa)
-    # d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA')
     d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
-    d_hex_min, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
+    _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
-    Phi_s = np.array([v_hex_min.conj().T.dot(b.dot(v_hex_min)) for b in hexagon_mf_operators])
+    v_hex_min = sparse.csr_matrix(v_hex_min).transpose()
+    Phi_s = np.array([(v_hex_min.getH().dot(b.dot(v_hex_min))).data[0] for b in hexagon_mf_operators])
     phi_s = psi_s
 
     # value difference for designated order parameters with the trial solutions
-    is_self_consistent = np.all(np.array([check(phi, Phi) for phi, Phi in zip(phi_s, Phi_s)]))
+    is_self_consistent = np.any(np.greater(np.repeat(err, 12), np.absolute(Phi_s-phi_s)))
 
-    avg_error = np.sum(np.absolute(phi_s - Phi_s)) / phi_s.shape[0]
-
-    return is_self_consistent, Phi_s, avg_error, d_hex_min, v_hex_min
+    return is_self_consistent, Phi_s, v_hex_min
 
 
 def load_params(file):
@@ -65,7 +57,7 @@ def load_params(file):
         return json.load(fp)
 
 
-def dump_result(Psi_s, Ns, params):
+def dump_result(Psi_s, Ns, tA, Ma, params):
     path = datetime.today().strftime("%Y_%m_%d_%H:%M:%S")
     os.makedirs(path)
     os.chdir(path)
@@ -73,6 +65,6 @@ def dump_result(Psi_s, Ns, params):
     np.save("Ns.npy", Ns)
     sio.savemat("result.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2],
                                "Psi2dn": Psi_s[3], "Psi1updn": Psi_s[14], "Psi12up": Psi_s[12],
-                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18]})
+                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18], "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
         json.dump(params, fp)

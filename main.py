@@ -12,4 +12,4 @@ if __name__ == '__main__':
                     ts=terms['ts'], Ma=terms['Ma'], u_term=terms['u_term'], v_term=terms['v_term'], mu_term=terms['mu_term'],
                     t_term=terms['t_term'], var_terms=terms['var_terms'], dig_h=terms['dig_h'], Pr=terms['Pr'],
                     Psi_s=terms['Psi_s'], Ns=terms['Ns'], err=params['err'], wall_time=params['wall_time'])
-    dump_result(Psi_s=result['Psi_s'], Ns=result['Ns'], params=params)
+    dump_result(Psi_s=result['Psi_s'], Ns=result['Ns'], tA=terms['tA'], Ma=terms['Ma'], params=params)
