@@ -27,8 +27,9 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         try:
             d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
         except sparse.linalg.ArpackNoConvergence:
-            d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
-            vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
+            continue
+            # d_hex = e.eigenvalues
+            # vec_hex = e.eigenvectors
 
         d_hex0, v_hex0 = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
@@ -42,7 +43,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
     is_self_consistent, Phi_s, v_hex_min = update(h_hexa, hexagon_mf_operators, phi_s, err)
 
     for lp in range(0, wall_time):
-        if is_self_consistent:
+        if is_self_consistent or Phi_s is None:
             break
         else:
             psi_s = Phi_s
@@ -51,27 +52,40 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
     if not is_self_consistent:
         print(f"    {k}, {j} iteration fail to converge", flush=True)
-        Phi_s[2] = np.nan
+        # Phi_s[2] = np.nan
 
-    # save the final optimal value of both order parameters£¬also save the
-    # corresponding state eigenvector
-    for i in range(0, 4):
-        Psi_s[i][j, k] = Phi_s[i]
+    if Phi_s is not None:
+        # save the final optimal value of both order parameters£¬also save the
+        # corresponding state eigenvector
+        for i in range(0, 4):
+            Psi_s[i][j, k] = Phi_s[i]
 
-    Psi_s[12][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[2].dot(v_hex_min)))).data[0]
-    Psi_s[13][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[1].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
-    Psi_s[14][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[1].dot(v_hex_min)))).data[0]
-    Psi_s[15][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[2].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
-    Psi_s[16][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
-    Psi_s[17][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[1].getH().dot(hexagon_mf_operators[2].dot(v_hex_min)))).data[0]
-    Psi_s[18][j, k] = (v_hex_min.getH().dot((hexagon_mf_operators[0] + hexagon_mf_operators[1]).dot(v_hex_min))).data[0]
-    Psi_s[19][j, k] = (v_hex_min.getH().dot((hexagon_mf_operators[2] + hexagon_mf_operators[3]).dot(v_hex_min))).data[0]
+        if not is_self_consistent:
+            Psi_s[2][j, k] = np.nan
 
-    for i in range(0, 4):
-        Ns[i][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i].dot(v_hex_min)))).data[0]
-    for i in range(4, 8):
-        tmp = hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i])
-        Ns[i][j, k] = (v_hex_min.getH().dot(tmp.dot(tmp.dot(v_hex_min)))).data[0]
+        Psi_s[12][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[2].dot(v_hex_min)))).data[0]
+        Psi_s[13][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[1].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
+        Psi_s[14][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[1].dot(v_hex_min)))).data[0]
+        Psi_s[15][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[2].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
+        Psi_s[16][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
+        Psi_s[17][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[1].getH().dot(hexagon_mf_operators[2].dot(v_hex_min)))).data[0]
+        Psi_s[18][j, k] = (v_hex_min.getH().dot((hexagon_mf_operators[0] + hexagon_mf_operators[1]).dot(v_hex_min))).data[0]
+        Psi_s[19][j, k] = (v_hex_min.getH().dot((hexagon_mf_operators[2] + hexagon_mf_operators[3]).dot(v_hex_min))).data[0]
+
+        for i in range(0, 4):
+            Ns[i][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i].dot(v_hex_min)))).data[0]
+        for i in range(4, 8):
+            tmp = hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i])
+            Ns[i][j, k] = (v_hex_min.getH().dot(tmp.dot(tmp.dot(v_hex_min)))).data[0]
+    else:
+        for i in range(0, 4):
+            Psi_s[i][j, k] = np.nan
+        for i in range(12, 20):
+            Psi_s[i][j, k] = np.nan
+        for i in range(0, 4):
+            Ns[i][j, k] = np.nan
+        for i in range(4, 8):
+            Ns[i][j, k] = np.nan
     print(f"{k}, {j} iteration finished in {time()-t_begin:.4} seconds with Psi1up{j,k}={Psi_s[0][j, k]}", flush=True)
     return Psi_s, Ns
 

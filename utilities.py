@@ -42,8 +42,9 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
     try:
         d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
     except sparse.linalg.ArpackNoConvergence:
-        d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
-        vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
+        return False, None, None
+        # d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
+        # vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
     _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
     v_hex_min = sparse.csr_matrix(v_hex_min).transpose()
