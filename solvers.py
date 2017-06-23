@@ -24,7 +24,12 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
         # solve the Hamilton with Eigenvectors and Eigenvalues
         # python returns array of Eigenvalues and normalized Eigenvectors
-        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
+        try:
+            d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
+        except sparse.linalg.eigs.ArpackNoConvergence:
+            d_hex = sparse.linalg.eigs.ArpackNoConvergence.eigenvalues
+            vec_hex = sparse.linalg.eigs.ArpackNoConvergence.eigenvectors
+
         d_hex0, v_hex0 = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
         # find phi1up(down)---the trial solution corresponding to the lowest eigenvalues of Hsite
