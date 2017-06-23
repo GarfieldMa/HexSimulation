@@ -41,9 +41,9 @@ def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h,
 def update(h_hexa, hexagon_mf_operators, psi_s, err):
     try:
         d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
-    except sparse.linalg.eigs.ArpackNoConvergence:
-        d_hex = sparse.linalg.eigs.ArpackNoConvergence.eigenvalues
-        vec_hex = sparse.linalg.eigs.ArpackNoConvergence.eigenvectors
+    except sparse.linalg.ArpackNoConvergence:
+        d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
+        vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
     _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
     v_hex_min = sparse.csr_matrix(v_hex_min).transpose()

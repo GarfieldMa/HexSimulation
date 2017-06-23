@@ -26,9 +26,9 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         # python returns array of Eigenvalues and normalized Eigenvectors
         try:
             d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
-        except sparse.linalg.eigs.ArpackNoConvergence:
-            d_hex = sparse.linalg.eigs.ArpackNoConvergence.eigenvalues
-            vec_hex = sparse.linalg.eigs.ArpackNoConvergence.eigenvectors
+        except sparse.linalg.ArpackNoConvergence:
+            d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
+            vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
 
         d_hex0, v_hex0 = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
