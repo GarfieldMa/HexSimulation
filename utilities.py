@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 
-def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts):
+def calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts):
     psi_up_s = psi_s[::2]
     psi_up_s_shifted = np.roll(psi_up_s, 3)
     psi_dn_s = psi_s[1::2]
@@ -22,7 +22,7 @@ def calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h,
                + psi_up_s_shifted.dot(up_adg_terms)
                + np.conj(psi_dn_s_shifted).dot(dn_a_terms)
                + psi_dn_s_shifted.dot(dn_adg_terms))
-    ret += (t * t_term + u_term + v_term + mu * mu_term)
+    ret += (t * t_term + u_term + v_term + mu * mu_term + uab_term)
     ret += (t * dig_h * ((- np.real(ts[0] * (np.conj(psi_up_s[0]) * psi_up_s[3]))
                           - np.real(np.conj(ts[4]) * (np.conj(psi_up_s[1]) * psi_up_s[4]))
                           - np.real(ts[2] * (np.conj(psi_up_s[2]) * psi_up_s[5]))

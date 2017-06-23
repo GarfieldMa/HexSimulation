@@ -6,7 +6,7 @@ from utilities import calc_h_hexa, update
 
 
 def iterate(k, j, t, wall_time, hexagon_mf_operators,
-            ts, Ma, u_term, v_term, mu_term, t_term, var_terms,
+            ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
             dig_h, Pr, Psi_s, Ns, err):
     t_begin = time()
     mu = Ma.flat[j]
@@ -20,18 +20,17 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
         # import the 6 single-site mean-field Hamiltonians for a Honeycomb lattice
         #  with two species of Pseudospins
-        h_hexa = calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
+        h_hexa = calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
 
         # solve the Hamilton with Eigenvectors and Eigenvalues
         # python returns array of Eigenvalues and normalized Eigenvectors
         try:
             d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
+            d_hex0, v_hex0 = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
         except sparse.linalg.ArpackNoConvergence:
             continue
             # d_hex = e.eigenvalues
             # vec_hex = e.eigenvectors
-
-        d_hex0, v_hex0 = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
         # find phi1up(down)---the trial solution corresponding to the lowest eigenvalues of Hsite
         if d_hex0 < d_hex_min:
@@ -47,7 +46,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
             break
         else:
             psi_s = Phi_s
-            h_hexa = calc_h_hexa(t, mu, psi_s, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
+            h_hexa = calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
             is_self_consistent, Phi_s, v_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
 
     if not is_self_consistent:
@@ -92,7 +91,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
 def solves_part(hexagon_mf_operators,
                 start_t, stop_t, ts, Ma,
-                u_term, v_term, mu_term, t_term, var_terms,
+                uab_term, u_term, v_term, mu_term, t_term, var_terms,
                 dig_h, Pr, Psi_s, Ns, err, wall_time):
     start, stop = len(start_t), len(stop_t)
     for k in range(start, start + stop):
@@ -101,7 +100,7 @@ def solves_part(hexagon_mf_operators,
 
         for j in range(0, len(Ma)):
             Psi_s, Ns = iterate(k, j, t, wall_time, hexagon_mf_operators,
-                                ts, Ma, u_term, v_term, mu_term, t_term, var_terms,
+                                ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
                                 dig_h, Pr, Psi_s, Ns, err)
 
     return Psi_s, Ns
@@ -109,17 +108,17 @@ def solves_part(hexagon_mf_operators,
 
 def solves(hexagon_mf_operators,
            t_a, t_b, ts, Ma,
-           u_term, v_term, mu_term, t_term, var_terms,
+           uab_term, u_term, v_term, mu_term, t_term, var_terms,
            dig_h, Pr, Psi_s, Ns, err, wall_time):
     t_begin = time()
     print("Simulation begin!", flush=True)
     Psi_s, Ns = solves_part(hexagon_mf_operators,
                             [], t_a, ts, Ma,
-                            u_term, v_term, mu_term, t_term, var_terms,
+                            uab_term, u_term, v_term, mu_term, t_term, var_terms,
                             dig_h, Pr, Psi_s, Ns, err, wall_time)
     Psi_s, Ns = solves_part(hexagon_mf_operators,
                             t_a, t_b, ts, Ma,
-                            u_term, v_term, mu_term, t_term, var_terms,
+                            uab_term, u_term, v_term, mu_term, t_term, var_terms,
                             dig_h, Pr, Psi_s, Ns, err, wall_time)
     print(f"Simulation completed within {time()-t_begin:.4} seconds", flush=True)
     return {'Psi_s': Psi_s, 'Ns': Ns}

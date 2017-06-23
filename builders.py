@@ -84,6 +84,19 @@ def build_u_term_mf_cluster(hexagon_mf_bases, U0):
     return sparse.csr_matrix(u_term)
 
 
+def build_uab_term_mf_cluster(hexagon_mf_bases, delta):
+    base_l = max(hexagon_mf_bases[0].shape)
+    ua, ub = delta/2, -delta/2
+    uab_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
+
+    for i in range(0, base_l):
+        # diagonal interaction part of Hamiltonian
+        ns = np.array([k[0, i] for k in hexagon_mf_bases])
+        uab_term[i, i] = ua * (ns[0] + ns[1] + ns[4] + ns[5] + ns[8] + ns[9]) + ub * (ns[2] + ns[3] + ns[6] + ns[7] + ns[10] + ns[11])
+
+    return sparse.csr_matrix(uab_term)
+
+
 def build_v_term_mf_cluster(hexagon_mf_bases, V0):
     base_l = max(hexagon_mf_bases[0].shape)
     v_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
@@ -220,7 +233,7 @@ def create(name, func, params, cached=False):
 
 
 def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
-            U, V, MU, W, mu_lower_bound, mu_upper_bound, ma,
+            delta, MU, U, V, W, mu_lower_bound, mu_upper_bound, ma,
             cached=False):
     hexagon_mf_bases = create("hexagon_mf_bases", func=build_hexagon_mf_basis, params=[nmax], cached=cached)
     hexagon_mf_operators = create("hexagon_mf_operators", func=build_hexagon_mf_operator, params=[hexagon_mf_bases], cached=cached)
@@ -246,6 +259,7 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     len_ma = len(Ma)
 
     # build Hamiltonian terms
+    uab_term = create("uab_term", func=build_uab_term_mf_cluster, params=[hexagon_mf_bases, delta], cached=cached)
     u_term = create("u_term", func=build_u_term_mf_cluster, params=[hexagon_mf_bases, U], cached=cached)
     v_term = create("v_term", func=build_v_term_mf_cluster, params=[hexagon_mf_bases, V], cached=cached)
     mu_term = create("mu_term", func=build_mu_term_mf_cluster, params=[hexagon_mf_bases, MU], cached=cached)
@@ -271,5 +285,5 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
 
     return {"hexagon_mf_operators": hexagon_mf_operators,
             't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
-            'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term, 'var_terms': var_terms,
+            'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term, 'var_terms': var_terms,
             'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns}

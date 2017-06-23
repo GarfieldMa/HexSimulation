@@ -13,9 +13,9 @@ Nmax=1;
 
 EVHexmin=[];
 %range setting of hopping strength 
-tfirst=0.2;tsecond=0.4;n1=3;n2=3;
+tfirst=0.4;tsecond=0.8;n1=10;n2=10;
 tA=[];
-ta=linspace(0.05,tfirst,n1);%ta-part1,near phase transition boundary, need to be calculated more densely;
+ta=linspace(0,tfirst,n1);%ta-part1,near phase transition boundary, need to be calculated more densely;
 tb=linspace(tfirst,tsecond,n2);%tb-part2
 
 
@@ -39,8 +39,8 @@ t3dn=conj(t3up);
 
 %setting chemical potential
 mu0=1;
-murange=1.5;
-Ma=linspace(-0.5,1.5,5);%the range of mu, chemical potential
+murange=2;
+Ma=linspace(-1,murange,12);%the range of mu, chemical potential
 
 %setting on-site interactions
 %range of on-site interaction of the two same pseudospin particles, fix U first
@@ -49,8 +49,17 @@ U0=1;
 U=U0;
 %range of on-site interaction of the two different pseudospin particles, fix V first
 %V=linspace(0,V0,50);
-V0=1;
+V0=U0/4;
 V=V0;
+
+%staggered potential energy
+delta=2;
+UA=delta/2;
+UB=-delta/2;
+
+% a new term with staggered potential
+UABterm=buildUABtermMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,UA,UB);
+
 
 %buliding Hamiltonian terms 
 Uterm=buildUtermMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,U0);
@@ -82,7 +91,7 @@ F5dnaterm=buildF5dnatermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5
 F6dnaterm=buildF6dnatermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t2dn);
 
 F1dnadgterm=buildF1dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t1dn);
-F2dnadgterm=buildF2dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t3dn);
+F2dnadgterm=buildF2dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t1dn);
 F3dnadgterm=buildF3dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t2dn);
 F4dnadgterm=buildF4dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t1dn);
 F5dnadgterm=buildF5dnadgtermHexaMFCluster(K1up,K1dn,K2up,K2dn,K3up,K3dn,K4up,K4dn,K5up,K5dn,K6up,K6dn,t3dn);
@@ -125,10 +134,13 @@ Psi5dn=zeros(length(Ma),n1+n2);Psi6dn=zeros(length(Ma),n1+n2);
 
 
 Psi12up=zeros(length(Ma),n1+n2);Psi12dn=zeros(length(Ma),n1+n2);
-Psi1updn=zeros(length(Ma),n1+n2);Psi2updn=zeros(length(Ma),n1+n2);        
-Psi12updn=zeros(length(Ma),n1+n2);Psi12dnup=zeros(length(Ma),n1+n2);        
-Psi1upanddn=zeros(length(Ma),n1+n2);Psi2upanddn=zeros(length(Ma),n1+n2);
 
+        Psi1updn=zeros(length(Ma),n1+n2);Psi2updn=zeros(length(Ma),n1+n2);
+        
+        Psi12updn=zeros(length(Ma),n1+n2);Psi12dnup=zeros(length(Ma),n1+n2);
+        
+        Psi1upanddn=zeros(length(Ma),n1+n2);Psi2upanddn=zeros(length(Ma),n1+n2);
+        
         N1up=zeros(length(Ma),n1+n2);
         N1dn=zeros(length(Ma),n1+n2);
         
@@ -181,7 +193,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
     +t*psi4up*F1upadgterm+t*psi5up*F2upadgterm+t*psi6up*F3upadgterm+t*psi1up*F4upadgterm+t*psi2up*F5upadgterm+t*psi3up*F6upadgterm...
     +t*psi4dn'*F1dnaterm+t*psi5dn'*F2dnaterm+t*psi6dn'*F3dnaterm+t*psi1dn'*F4dnaterm+t*psi2dn'*F5dnaterm+t*psi3dn'*F6dnaterm...
     +t*psi4dn*F1dnadgterm+t*psi5dn*F2dnadgterm+t*psi6dn*F3dnadgterm+t*psi1dn*F4dnadgterm+t*psi2dn*F5dnadgterm+t*psi3dn*F6dnadgterm...
-    +t*Tterm+Uterm+Vterm+mu*muterm+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
+    +t*Tterm+Uterm+Vterm+mu*muterm+UABterm+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
 
 %     HS=sparse(HAB);
 %     [Vec,D]=eigs(HS,1,'SR');    % to solve the smallest algebraic eigenvalues
@@ -222,12 +234,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
 %             end
         end
         
-    PHI1up=0; PHI1dn=0;
-    PHI2up=0; PHI2dn=0;
-    PHI3up=0; PHI3dn=0;
-    PHI4up=0; PHI4dn=0;
-    PHI5up=0; PHI5dn=0;
-    PHI6up=0; PHI6dn=0;
+
 % Values of Order parameters corresponding to the trial solution of ground state above  
 	PHI1up=VHexmin'*b1up*VHexmin;PHI1dn=VHexmin'*b1dn*VHexmin;
     PHI2up=VHexmin'*b2up*VHexmin;PHI2dn=VHexmin'*b2dn*VHexmin;
@@ -248,7 +255,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
         
         step=0;%if step>100,the self-consistency fails.
         while (dif1up>error)||(dif1dn>error)||(dif2up>error)||(dif2dn>error)||(dif3up>error)||(dif3dn>error)||(dif4up>error)||(dif4dn>error)||(dif5up>error)||(dif5dn>error)||(dif6up>error)||(dif6dn>error)
-           if step<16
+           if step<30
                
                psi1up=PHI1up;psi1dn=PHI1dn;
                psi2up=PHI2up;psi2dn=PHI2dn;
@@ -261,7 +268,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
     +t*psi4up*F1upadgterm+t*psi5up*F2upadgterm+t*psi6up*F3upadgterm+t*psi1up*F4upadgterm+t*psi2up*F5upadgterm+t*psi3up*F6upadgterm...
     +t*psi4dn'*F1dnaterm+t*psi5dn'*F2dnaterm+t*psi6dn'*F3dnaterm+t*psi1dn'*F4dnaterm+t*psi2dn'*F5dnaterm+t*psi3dn'*F6dnaterm...
     +t*psi4dn*F1dnadgterm+t*psi5dn*F2dnadgterm+t*psi6dn*F3dnadgterm+t*psi1dn*F4dnadgterm+t*psi2dn*F5dnadgterm+t*psi3dn*F6dnadgterm...
-    +t*Tterm+Uterm+Vterm+mu*muterm+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
+    +t*Tterm+Uterm+Vterm+mu*muterm+uab_term+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
 
 
 %     HS=sparse(HAB);
@@ -276,13 +283,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
 % Designated ground states of the Cluster           
 VHexmin=VHex0;
 
-    PHI1up=0; PHI1dn=0;
-    PHI2up=0; PHI2dn=0;
-    PHI3up=0; PHI3dn=0;
-    PHI4up=0; PHI4dn=0;
-    PHI5up=0; PHI5dn=0;
-    PHI6up=0; PHI6dn=0;
- 
+
 	PHI1up=VHexmin'*b1up*VHexmin;PHI1dn=VHexmin'*b1dn*VHexmin;
     PHI2up=VHexmin'*b2up*VHexmin;PHI2dn=VHexmin'*b2dn*VHexmin;
     
@@ -419,7 +420,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
     +t*psi4up*F1upadgterm+t*psi5up*F2upadgterm+t*psi6up*F3upadgterm+t*psi1up*F4upadgterm+t*psi2up*F5upadgterm+t*psi3up*F6upadgterm...
     +t*psi4dn'*F1dnaterm+t*psi5dn'*F2dnaterm+t*psi6dn'*F3dnaterm+t*psi1dn'*F4dnaterm+t*psi2dn'*F5dnaterm+t*psi3dn'*F6dnaterm...
     +t*psi4dn*F1dnadgterm+t*psi5dn*F2dnadgterm+t*psi6dn*F3dnadgterm+t*psi1dn*F4dnadgterm+t*psi2dn*F5dnadgterm+t*psi3dn*F6dnadgterm...
-    +t*Tterm+Uterm+Vterm+mu*muterm+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
+    +t*Tterm+Uterm+Vterm+mu*muterm+uab_term+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
 
 
 %     HS=sparse(HAB);
@@ -461,12 +462,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
 %             end
         end
         
-    PHI1up=0; PHI1dn=0;
-    PHI2up=0; PHI2dn=0;
-    PHI3up=0; PHI3dn=0;
-    PHI4up=0; PHI4dn=0;
-    PHI5up=0; PHI5dn=0;
-    PHI6up=0; PHI6dn=0;
+
 % Values of Order parameters corresponding to the trial solution of ground state above  
 	PHI1up=VHexmin'*b1up*VHexmin;PHI1dn=VHexmin'*b1dn*VHexmin;
     PHI2up=VHexmin'*b2up*VHexmin;PHI2dn=VHexmin'*b2dn*VHexmin;
@@ -487,7 +483,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
         
         step=0;%if step>100,the self-consistency fails.
         while (dif1up>error)||(dif1dn>error)||(dif2up>error)||(dif2dn>error)||(dif3up>error)||(dif3dn>error)||(dif4up>error)||(dif4dn>error)||(dif5up>error)||(dif5dn>error)||(dif6up>error)||(dif6dn>error)
-           if step<100
+           if step<30
                
                psi1up=PHI1up;psi1dn=PHI1dn;
                psi2up=PHI2up;psi2dn=PHI2dn;
@@ -500,7 +496,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
     +t*psi4up*F1upadgterm+t*psi5up*F2upadgterm+t*psi6up*F3upadgterm+t*psi1up*F4upadgterm+t*psi2up*F5upadgterm+t*psi3up*F6upadgterm...
     +t*psi4dn'*F1dnaterm+t*psi5dn'*F2dnaterm+t*psi6dn'*F3dnaterm+t*psi1dn'*F4dnaterm+t*psi2dn'*F5dnaterm+t*psi3dn'*F6dnaterm...
     +t*psi4dn*F1dnadgterm+t*psi5dn*F2dnadgterm+t*psi6dn*F3dnadgterm+t*psi1dn*F4dnadgterm+t*psi2dn*F5dnadgterm+t*psi3dn*F6dnadgterm...
-    +t*Tterm+Uterm+Vterm+mu*muterm+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
+    +t*Tterm+Uterm+Vterm+mu*muterm+uab_term+DigH*t*(-real(t1up*psi1up'*psi4up)-real(conj(t3up)*psi2up'*psi5up)-real(t2up*psi3up'*psi6up)-real(conj(t1up)*psi4up'*psi1up)-real(t3up*psi5up'*psi2up)-real(conj(t2up)*psi6up'*psi3up)-real(t1dn*psi1dn'*psi4dn)-real(conj(t3dn)*psi2dn'*psi5dn)-real(t2dn*psi3dn'*psi6dn)-real(conj(t1dn)*psi4dn'*psi1dn)-real(t3dn*psi5dn'*psi2dn)-real(conj(t2dn)*psi6dn'*psi3dn));
 
 
 %     HS=sparse(HAB);
@@ -515,12 +511,7 @@ HHexa=t*psi4up'*F1upaterm+t*psi5up'*F2upaterm+t*psi6up'*F3upaterm+t*psi1up'*F4up
 % Designated ground states of the Cluster           
 VHexmin=VHex0;
 
-    PHI1up=0; PHI1dn=0;
-    PHI2up=0; PHI2dn=0;
-    PHI3up=0; PHI3dn=0;
-    PHI4up=0; PHI4dn=0;
-    PHI5up=0; PHI5dn=0;
-    PHI6up=0; PHI6dn=0;
+
  
 	PHI1up=VHexmin'*b1up*VHexmin;PHI1dn=VHexmin'*b1dn*VHexmin;
     PHI2up=VHexmin'*b2up*VHexmin;PHI2dn=VHexmin'*b2dn*VHexmin;
@@ -587,7 +578,7 @@ VHexmin=VHex0;
         
          
  %save the final optimal value of both order parameters��also save the
- %corresponding state��eigenvector��
+ %corresponding state
 		EVHexmin=[EVHexmin,VHexmin]; 
         Psi1up(j,k)=PHI1up; Psi1dn(j,k)=PHI1dn;
         Psi2up(j,k)=PHI2up; Psi2dn(j,k)=PHI2dn;
