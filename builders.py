@@ -12,7 +12,6 @@ def build_hexagon_mf_basis(nmax):
     # initialize matrices
     # k1up, k1down, k2up, k2down ... k6up, k6down
     hexagon_mf_bases = np.array([sparse.lil_matrix((1, nn), dtype=complex) for _ in range(0, 12)])
-    # TODO: should be optimized later
     count = 0
     for i0 in range(0, nmax + 1):
         for i1 in range(0, nmax + 1):
@@ -152,6 +151,10 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
     return sparse.csr_matrix(t_term)
 
 
+def build_vec_s(base_l, ma, n1, n2):
+    return np.array([[np.zeros((base_l, 1), dtype=complex) for _ in range(0, ma)] for _ in range(0, n1 + n2)])
+
+
 def build_var_terms(hexagon_mf_bases, ts):
     base_l = max(hexagon_mf_bases[0].shape)
     var_terms = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 24)])
@@ -197,17 +200,19 @@ def build_var_terms(hexagon_mf_bases, ts):
 
 
 def create(name, func, params, cached=False):
-    if not os.path.exists("var/"):
-        os.makedirs("var/")
+    base, path = os.getcwd(), "var"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    os.chdir(path)
     if cached:
         try:
             print(f"Loading {name} ...", end=' ', flush=True)
-            ret = np.load(f"var/{name}.npy")
+            ret = np.load(f"{name}.npy")
             print("Done!", flush=True)
             return ret
         except IOError:
             try:
-                ret = sparse.load_npz(f"var/{name}.npz")
+                ret = sparse.load_npz(f"{name}.npz")
                 print("Done!", flush=True)
                 return ret
             except IOError:
@@ -215,20 +220,22 @@ def create(name, func, params, cached=False):
                 ret = func(*params)
                 print(f"saving to file ...", end=' ', flush=True)
                 if sparse.isspmatrix(ret):
-                    sparse.save_npz(f"var/{name}.npz", ret)
+                    sparse.save_npz(f"{name}.npz", ret)
                 else:
-                    np.save(f"var/{name}.npy", ret)
+                    np.save(f"{name}.npy", ret)
                 print("Done!", flush=True)
+                os.chdir(base)
                 return ret
     else:
         print(f"Building {name} ...", end=' ', flush=True)
         ret = func(*params)
         print(f"saving to file ...", end=' ', flush=True)
         if sparse.isspmatrix(ret):
-            sparse.save_npz(f"var/{name}.npz", ret)
+            sparse.save_npz(f"{name}.npz", ret)
         else:
-            np.save(f"var/{name}.npy", ret)
+            np.save(f"{name}.npy", ret)
         print("Done!", flush=True)
+        os.chdir(base)
         return ret
 
 
@@ -256,7 +263,6 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
 
     # the range of mu, chemical potential
     Ma = np.linspace(mu_lower_bound, mu_upper_bound, ma)
-    len_ma = len(Ma)
 
     # build Hamiltonian terms
     uab_term = create("uab_term", func=build_uab_term_mf_cluster, params=[hexagon_mf_bases, delta], cached=cached)
@@ -272,9 +278,11 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     # the range of order parameters trial solution, the trial OrderParameter is Complex with Pa(i,j)=Pr*exp(i*theta)
     Pr = np.linspace(0.01, cmath.sqrt(nmax), 10)
     # Psi1up, Psi1dn, Psi2up, Psi2dn ... Psi6up, Psi6dn
-    Psi_s = np.array([np.zeros((len_ma, n1 + n2), dtype=complex) for _ in range(0, 20)])
+    Psi_s = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 20)])
     # N1up, ... N2dn, N1squareup, ... N2squaredn
-    Ns = np.array([np.zeros((len_ma, n1 + n2), dtype=complex) for _ in range(0, 8)])
+    Ns = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 8)])
+    # store all the eigen-vectors solved
+    Vec_s = build_vec_s(max(hexagon_mf_bases[0].shape), ma, n1, n2)
 
     print("Done!", flush=True)
 
@@ -286,4 +294,4 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     return {"hexagon_mf_operators": hexagon_mf_operators,
             't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
             'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term, 'var_terms': var_terms,
-            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns}
+            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'Vec_s': Vec_s}

@@ -614,7 +614,7 @@ end
 
 Ttot=T1+T2
 % display phase diagram for orderparameter
-figure; surf(tA,MA,abs(Psi1up),'edgecolor','none');shading interp;view(0,90);
+figure; surf(tA,MA,abs(Psi1up),'edgecolor','none');shading interp;view(0,90);colorbar;set(gca,'FontSize', 30);
 figure; surf(tA,MA,abs(Psi1dn),'edgecolor','none');shading interp;view(0,90);
 figure; surf(tA,MA,abs(Psi1up+Psi1dn)/2,'edgecolor','none');shading interp;view(0,90);
 figure; surf(tA,MA,abs(Psi2up),'edgecolor','none');shading interp;view(0,90);

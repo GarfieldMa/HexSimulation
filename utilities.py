@@ -62,8 +62,9 @@ def load_params(file):
         return json.load(fp)
 
 
-def dump_result(Psi_s, Ns, tA, Ma, params):
-    path = datetime.today().strftime("%Y_%m_%d_%H:%M:%S")
+def dump_result(Psi_s, Ns, tA, Ma, Vec_s, params):
+    base = os.getcwd()
+    path = datetime.today().strftime("%Y_%m_%d_%H%M%S")
     os.makedirs(path)
     os.chdir(path)
     np.save("Psi_s.npy", Psi_s)
@@ -73,3 +74,5 @@ def dump_result(Psi_s, Ns, tA, Ma, params):
                                "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18], "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
+
+    os.chdir(base)
