@@ -7,7 +7,7 @@ from utilities import calc_h_hexa, update
 
 def iterate(k, j, t, wall_time, hexagon_mf_operators,
             ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
-            dig_h, Pr, Psi_s, Ns, Vec_s, err):
+            dig_h, Pr, Psi_s, Ns, Nsquare_s, Vec_s, err):
     t_begin = time()
     mu = Ma.flat[j]
     # initial d_hex_min is the minimum of eigenvalue
@@ -75,11 +75,11 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         Psi_s[18][j, k] = (v_hex_min.getH().dot((hexagon_mf_operators[0] + hexagon_mf_operators[1]).dot(v_hex_min))).data[0]
         Psi_s[19][j, k] = (v_hex_min.getH().dot((hexagon_mf_operators[2] + hexagon_mf_operators[3]).dot(v_hex_min))).data[0]
 
-        for i in range(0, 4):
+        for i in range(0, 12):
             Ns[i][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i].dot(v_hex_min)))).data[0]
-        for i in range(4, 8):
+        for i in range(0, 12):
             tmp = hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i])
-            Ns[i][j, k] = (v_hex_min.getH().dot(tmp.dot(tmp.dot(v_hex_min)))).data[0]
+            Nsquare_s[i][j, k] = (v_hex_min.getH().dot(tmp.dot(tmp.dot(v_hex_min)))).data[0]
     else:
         for i in range(0, 4):
             Psi_s[i][j, k] = np.nan
@@ -90,41 +90,41 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         for i in range(4, 8):
             Ns[i][j, k] = np.nan
     print(f"{k}, {j} iteration finished in {time()-t_begin:.4} seconds with Psi1up{j,k}={Psi_s[0][j, k]}", flush=True)
-    return Psi_s, Ns
+    return Psi_s, Ns, Nsquare_s
 
 
 def solves_part(hexagon_mf_operators,
                 start_t, stop_t, ts, Ma,
                 uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                dig_h, Pr, Psi_s, Ns, Vec_s, err, wall_time):
+                dig_h, Pr, Psi_s, Ns, Nsquare_s, Vec_s, err, wall_time):
     start, stop = len(start_t), len(stop_t)
     for k in range(start, start + stop):
         # set hopping parameter
         t = stop_t.flat[k - start]
 
         for j in range(0, len(Ma)):
-            Psi_s, Ns = iterate(k, j, t, wall_time, hexagon_mf_operators,
-                                ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                                dig_h, Pr, Psi_s, Ns, Vec_s, err)
+            Psi_s, Ns, Nsquare_s = iterate(k, j, t, wall_time, hexagon_mf_operators,
+                                           ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                           dig_h, Pr, Psi_s, Ns, Nsquare_s, Vec_s, err)
 
-    return Psi_s, Ns
+    return Psi_s, Ns, Nsquare_s
 
 
 def solves(hexagon_mf_operators,
            t_a, t_b, ts, Ma,
            uab_term, u_term, v_term, mu_term, t_term, var_terms,
-           dig_h, Pr, Psi_s, Ns, Vec_s,
+           dig_h, Pr, Psi_s, Ns, Nsquare_s, Vec_s,
            err, wall_time):
     t_begin = time()
     print("Simulation begin!", flush=True)
-    Psi_s, Ns = solves_part(hexagon_mf_operators,
-                            [], t_a, ts, Ma,
-                            uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                            dig_h, Pr, Psi_s, Ns, Vec_s, err, wall_time)
-    Psi_s, Ns = solves_part(hexagon_mf_operators,
-                            t_a, t_b, ts, Ma,
-                            uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                            dig_h, Pr, Psi_s, Ns, Vec_s, err, wall_time)
+    Psi_s, Ns, Nsquare_s = solves_part(hexagon_mf_operators,
+                                       [], t_a, ts, Ma,
+                                       uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                       dig_h, Pr, Psi_s, Ns, Nsquare_s, Vec_s, err, wall_time)
+    Psi_s, Ns, Nsquare_s = solves_part(hexagon_mf_operators,
+                                       t_a, t_b, ts, Ma,
+                                       uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                       dig_h, Pr, Psi_s, Ns, Nsquare_s, Vec_s, err, wall_time)
     print(f"Simulation completed within {time()-t_begin:.4} seconds", flush=True)
-    return {'Psi_s': Psi_s, 'Ns': Ns, 'Vec_s': Vec_s}
+    return {'Psi_s': Psi_s, 'Ns': Ns, 'Nsquare_s': Nsquare_s, 'Vec_s': Vec_s}
 

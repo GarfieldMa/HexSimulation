@@ -62,16 +62,20 @@ def load_params(file):
         return json.load(fp)
 
 
-def dump_result(Psi_s, Ns, tA, Ma, Vec_s, params):
+def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, Vec_s, params):
     base = os.getcwd()
     path = datetime.today().strftime("%Y_%m_%d_%H%M%S")
     os.makedirs(path)
     os.chdir(path)
     np.save("Psi_s.npy", Psi_s)
     np.save("Ns.npy", Ns)
+    np.save("Nsquare_s.npy", Nsquare_s)
     sio.savemat("result.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2],
                                "Psi2dn": Psi_s[3], "Psi1updn": Psi_s[14], "Psi12up": Psi_s[12],
-                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18], "tA": tA, "Ma": Ma})
+                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18],
+                               "N1up": Ns[0], "N1dn": Ns[1],
+                               "N1squareup": Nsquare_s[0], "N1squaredn": Nsquare_s[1],
+                               "Vec_s": Vec_s, "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
 

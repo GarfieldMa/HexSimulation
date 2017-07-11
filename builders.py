@@ -10,7 +10,7 @@ def build_hexagon_mf_basis(nmax):
     nn = (nmax + 1) ** 12
 
     # initialize matrices
-    # k1up, k1down, k2up, k2down ... k6up, k6down
+    # k1up, k1down, k2up, k2down ... k6up, k6uodown
     hexagon_mf_bases = np.array([sparse.lil_matrix((1, nn), dtype=complex) for _ in range(0, 12)])
     count = 0
     for i0 in range(0, nmax + 1):
@@ -56,7 +56,7 @@ def build_hexagon_mf_operator(hexagon_mf_bases):
         ks = np.array([k[0, i] for k in hexagon_mf_bases])
         for j in range(0, nn):
 
-            # ls = [K1up(j), K1down(j) ...]
+            # ls = [K1up(j), K1down(j) d...]
             ls = np.array([l[0, j] for l in hexagon_mf_bases])
             cmp_results = np.where(np.not_equal(ks, ls))[0]
             if cmp_results.shape[0] == 1:
@@ -80,6 +80,8 @@ def build_u_term_mf_cluster(hexagon_mf_bases, U0):
                         + U0 / 2 * (ns[8] * (ns[8] - 1) + ns[9] * (ns[9] - 1))
                         + U0 / 2 * (ns[10] * (ns[10] - 1) + ns[11] * (ns[11] - 1)))
 
+    # u_term = sparse.csr_matrix(u_term)
+    # u_term *= (U0 / 2)
     return sparse.csr_matrix(u_term)
 
 
@@ -140,19 +142,20 @@ def build_t_term_mf_cluster(hexagon_mf_bases, ts):
                 if idx1 - idx0 == 2 or idx1 - idx0 == -10:
                     if ks[idx0] == ls[idx0] + 1 and ks[idx1] == ls[idx1] - 1:
                         if (idx0 // 2) % 2:
-                            t_term[i, j] -= ts_shifted[idx0] * cmath.sqrt(ks[idx0] * ls[idx1])
+                            t_term[i, j] = ts_shifted[idx0] * cmath.sqrt(ks[idx0] * ls[idx1])
                         else:
-                            t_term[i, j] -= np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx0] * ls[idx1])
+                            t_term[i, j] = np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx0] * ls[idx1])
                     if ks[idx0] == ls[idx0] - 1 and ks[idx1] == ls[idx1] + 1:
                         if (idx0 // 2) % 2:
-                            t_term[i, j] -= np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx1] * ls[idx0])
+                            t_term[i, j] = np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx1] * ls[idx0])
                         else:
-                            t_term[i, j] -= ts_shifted[idx0] * cmath.sqrt(ks[idx1] * ls[idx0])
+                            t_term[i, j] = ts_shifted[idx0] * cmath.sqrt(ks[idx1] * ls[idx0])
     return sparse.csr_matrix(t_term)
 
 
 def build_vec_s(base_l, ma, n1, n2):
-    return np.array([[np.zeros((base_l, 1), dtype=complex) for _ in range(0, ma)] for _ in range(0, n1 + n2)])
+    # TODO: ma, n1, n2 position
+    return np.array([[np.zeros((base_l, 1), dtype=complex) for _ in range(0, n1 + n2)] for _ in range(0, ma)])
 
 
 def build_var_terms(hexagon_mf_bases, ts):
@@ -174,27 +177,27 @@ def build_var_terms(hexagon_mf_bases, ts):
                     # condition for up_a_term
                     if idx % 2 == 0 and ks[idx] == ls[idx] - 1:
                         if idx % 4 == 0:
-                            var_terms[idx // 2][i, j] -= t_factors[idx // 2] * cmath.sqrt(ls[idx])
+                            var_terms[idx // 2][i, j] = t_factors[idx // 2] * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[idx // 2][i, j] -= (t_factors[idx // 2].conj()) * cmath.sqrt(ls[idx])
+                            var_terms[idx // 2][i, j] = (t_factors[idx // 2].conj()) * cmath.sqrt(ls[idx])
                     # condition for up_adg_term
-                    if idx % 2 == 0 and ks[idx] == ls[idx] + 1:
+                    elif idx % 2 == 0 and ks[idx] == ls[idx] + 1:
                         if idx % 4 == 0:
-                            var_terms[(idx // 2) + 6][i, j] -= (t_factors[idx // 2].conj()) * cmath.sqrt(ks[idx])
+                            var_terms[(idx // 2) + 6][i, j] = (t_factors[idx // 2].conj()) * cmath.sqrt(ks[idx])
                         else:
-                            var_terms[(idx // 2) + 6][i, j] -= t_factors[idx // 2] * cmath.sqrt(ks[idx])
+                            var_terms[(idx // 2) + 6][i, j] = t_factors[idx // 2] * cmath.sqrt(ks[idx])
                     # condition for dn_a_term
-                    if idx % 2 != 0 and ks[idx] == ls[idx] - 1:
+                    elif idx % 2 != 0 and ks[idx] == ls[idx] - 1:
                         if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 12][i, j] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 12][i, j] = t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
                         else:
-                            var_terms[(idx // 2) + 12][i, j] -= (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ls[idx])
+                            var_terms[(idx // 2) + 12][i, j] = (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ls[idx])
                     # condition for dn_adg_term
-                    if idx % 2 != 0 and ks[idx] == ls[idx] + 1:
+                    elif idx % 2 != 0 and ks[idx] == ls[idx] + 1:
                         if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 18][i, j] -= (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ks[idx])
+                            var_terms[(idx // 2) + 18][i, j] = (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ks[idx])
                         else:
-                            var_terms[(idx // 2) + 18][i, j] -= t_factors[(idx // 2) + 6] * cmath.sqrt(ks[idx])
+                            var_terms[(idx // 2) + 18][i, j] = t_factors[(idx // 2) + 6] * cmath.sqrt(ks[idx])
 
     return var_terms
 
@@ -205,27 +208,9 @@ def create(name, func, params, cached=False):
         os.makedirs(path)
     os.chdir(path)
     if cached:
-        try:
-            print(f"Loading {name} ...", end=' ', flush=True)
-            ret = np.load(f"{name}.npy")
-            print("Done!", flush=True)
-            return ret
-        except IOError:
-            try:
-                ret = sparse.load_npz(f"{name}.npz")
-                print("Done!", flush=True)
-                return ret
-            except IOError:
-                print(f"{name} not found and now building {name} ...", end=' ', flush=True)
-                ret = func(*params)
-                print(f"saving to file ...", end=' ', flush=True)
-                if sparse.isspmatrix(ret):
-                    sparse.save_npz(f"{name}.npz", ret)
-                else:
-                    np.save(f"{name}.npy", ret)
-                print("Done!", flush=True)
-                os.chdir(base)
-                return ret
+        print(f"Loading {name} ...", end=' ', flush=True)
+        ret = np.load(f"{name}.npy")
+        print("Done!", flush=True)
     else:
         print(f"Building {name} ...", end=' ', flush=True)
         ret = func(*params)
@@ -235,8 +220,8 @@ def create(name, func, params, cached=False):
         else:
             np.save(f"{name}.npy", ret)
         print("Done!", flush=True)
-        os.chdir(base)
-        return ret
+    os.chdir(base)
+    return ret
 
 
 def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
@@ -280,7 +265,8 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     # Psi1up, Psi1dn, Psi2up, Psi2dn ... Psi6up, Psi6dn
     Psi_s = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 20)])
     # N1up, ... N2dn, N1squareup, ... N2squaredn
-    Ns = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 8)])
+    Ns = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 12)])
+    Nsquare_s = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 12)])
     # store all the eigen-vectors solved
     Vec_s = build_vec_s(max(hexagon_mf_bases[0].shape), ma, n1, n2)
 
@@ -294,4 +280,4 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     return {"hexagon_mf_operators": hexagon_mf_operators,
             't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
             'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term, 'var_terms': var_terms,
-            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'Vec_s': Vec_s}
+            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'Vec_s': Vec_s, 'Nsquare_s': Nsquare_s}
