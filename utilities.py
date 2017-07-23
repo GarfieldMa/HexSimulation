@@ -40,12 +40,15 @@ def calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_ter
 
 def update(h_hexa, hexagon_mf_operators, psi_s, err):
     try:
-        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR')
+        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR', k=100)
     except sparse.linalg.ArpackNoConvergence:
         return False, None, None
         # d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
         # vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
-    _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
+    args = np.argsort(d_hex)
+    vec_hex = vec_hex[:, args]
+    v_hex_min = vec_hex[:, 0]
+    # _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
     v_hex_min = sparse.csr_matrix(v_hex_min).transpose()
     Phi_s = np.array([(v_hex_min.getH().dot(b.dot(v_hex_min))).data[0] for b in hexagon_mf_operators])
@@ -54,7 +57,7 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
     # value difference for designated order parameters with the trial solutions
     is_self_consistent = np.any(np.greater(np.repeat(err, 12), np.absolute(Phi_s-phi_s)))
 
-    return is_self_consistent, Phi_s, v_hex_min
+    return is_self_consistent, Phi_s, v_hex_min, vec_hex
 
 
 def load_params(file):

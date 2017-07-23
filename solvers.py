@@ -11,7 +11,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
     t_begin = time()
     mu = Ma.flat[j]
     # initial d_hex_min is the minimum of eigenvalue
-    d_hex_min, v_hex_min = 1.0e5, None
+    d_hex_min, v_hex_min, vec_hex = 1.0e5, None, None
     phi_s = None
 
     # t_init_begin = time()
@@ -39,7 +39,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
     # Values of Order parameters corresponding to the trial solution of ground state above
     # # value difference for designated order parameters with the trial solutions
-    is_self_consistent, Phi_s, v_hex_min = update(h_hexa, hexagon_mf_operators, phi_s, err)
+    is_self_consistent, Phi_s, v_hex_min, vec_hex = update(h_hexa, hexagon_mf_operators, phi_s, err)
 
     for lp in range(0, wall_time):
         if is_self_consistent or Phi_s is None:
@@ -47,7 +47,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         else:
             psi_s = Phi_s
             h_hexa = calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
-            is_self_consistent, Phi_s, v_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
+            is_self_consistent, Phi_s, v_hex_min, vec_hex = update(h_hexa, hexagon_mf_operators, psi_s, err)
 
     if not is_self_consistent:
         print(f"    {k}, {j} iteration fail to converge", flush=True)
@@ -55,8 +55,8 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
     if Phi_s is not None:
         # save the v_hex_min
-        _tmp = np.array(v_hex_min.todense()).reshape((v_hex_min.shape[0],))
-        Vec_s[j, k] = _tmp
+        # _tmp = np.array(v_hex_min.todense()).reshape((v_hex_min.shape[0],))
+        Vec_s[j, k] = vec_hex.T
 
         # save the final optimal value of both order parameters£¬also save the
         # corresponding state eigenvector

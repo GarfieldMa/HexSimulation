@@ -385,7 +385,8 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     Ns = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
     Nsquare_s = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
     # store all the eigen-vectors solved
-    Vec_s = np.tile(np.zeros((nmax+1)**12, dtype=complex), (ma, n1+n2, 1))
+    # Vec_s = np.tile(np.zeros((nmax+1)**12, dtype=complex), (ma, n1+n2, 1))
+    Vec_s = np.tile(np.zeros((nmax + 1) ** 12, dtype=complex), (ma, n1 + n2, 100, 1))
 
     # ts
     ts = TsBuilder(W=W).get_term()
@@ -401,7 +402,6 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     var_terms = build(model=VarTermsBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
 
     return {"hexagon_mf_operators": mf_ops,
-            "hexagon_mf_bases": mf_bases,
             't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
             'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term,
             'var_terms': var_terms,
