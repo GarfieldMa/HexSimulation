@@ -55,7 +55,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
     if Phi_s is not None:
         # save the v_hex_min
-        _tmp = np.array(v_hex_min.todense())
+        _tmp = np.array(v_hex_min.todense()).reshape((v_hex_min.shape[0],))
         Vec_s[j, k] = _tmp
 
         # save the final optimal value of both order parameters£¬also save the

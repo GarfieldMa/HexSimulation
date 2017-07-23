@@ -1,283 +1,432 @@
 import numpy as np
 import scipy.sparse as sparse
+from time import time
 import cmath
 import os
+from abc import ABCMeta, abstractmethod
 
 
-def build_hexagon_mf_basis(nmax):
+class Builder(metaclass=ABCMeta):
 
-    # dimension of the basis state, as well as the Hilbert space
-    nn = (nmax + 1) ** 12
+    def __init__(self, name, shape):
+        self.name = name
+        self.shape = shape
+        self.term = None
+        self.is_prepared = True
 
-    # initialize matrices
-    # k1up, k1down, k2up, k2down ... k6up, k6uodown
-    hexagon_mf_bases = np.array([sparse.lil_matrix((1, nn), dtype=complex) for _ in range(0, 12)])
-    count = 0
-    for i0 in range(0, nmax + 1):
-        for i1 in range(0, nmax + 1):
-            for i2 in range(0, nmax + 1):
-                for i3 in range(0, nmax + 1):
-                    for i4 in range(0, nmax + 1):
-                        for i5 in range(0, nmax + 1):
-                            for i6 in range(0, nmax + 1):
-                                for i7 in range(0, nmax + 1):
-                                    for i8 in range(0, nmax + 1):
-                                        for i9 in range(0, nmax + 1):
-                                            for i10 in range(0, nmax + 1):
-                                                for i11 in range(0, nmax + 1):
-                                                    hexagon_mf_bases[0][0, count] = i0
-                                                    hexagon_mf_bases[1][0, count] = i1
-                                                    hexagon_mf_bases[2][0, count] = i2
-                                                    hexagon_mf_bases[3][0, count] = i3
-                                                    hexagon_mf_bases[4][0, count] = i4
-                                                    hexagon_mf_bases[5][0, count] = i5
-                                                    hexagon_mf_bases[6][0, count] = i6
-                                                    hexagon_mf_bases[7][0, count] = i7
-                                                    hexagon_mf_bases[8][0, count] = i8
-                                                    hexagon_mf_bases[9][0, count] = i9
-                                                    hexagon_mf_bases[10][0, count] = i10
-                                                    hexagon_mf_bases[11][0, count] = i11
-                                                    count += 1
-    return hexagon_mf_bases
-
-
-def build_hexagon_mf_operator(hexagon_mf_bases):
-
-    nn = max(hexagon_mf_bases[0].shape)
-    # initialize matrices
-    # b1up, b1down, b2up, b2down ... b6up, b6down
-    hexagon_mf_operators = np.array([sparse.lil_matrix((nn, nn), dtype=complex) for _ in range(0, 12)])
-
-    # fill up operators
-    # t_lp = time()
-    for i in range(0, nn):
-
-        # ks = [K1up(I), K1down(I) ...]
-        ks = np.array([k[0, i] for k in hexagon_mf_bases])
-        for j in range(0, nn):
-
-            # ls = [K1up(j), K1down(j) d...]
-            ls = np.array([l[0, j] for l in hexagon_mf_bases])
-            cmp_results = np.where(np.not_equal(ks, ls))[0]
-            if cmp_results.shape[0] == 1:
-                idx = cmp_results[0]
-                if ks[idx] == ls[idx] - 1:
-                    hexagon_mf_operators[idx][i, j] += cmath.sqrt(ls[idx])
-    return hexagon_mf_operators
-
-
-def build_u_term_mf_cluster(hexagon_mf_bases, U0):
-    base_l = max(hexagon_mf_bases[0].shape)
-    u_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
-
-    for i in range(0, base_l):
-        # diagonal interaction part of Hamiltonian
-        ns = [k[0, i] for k in hexagon_mf_bases]
-        u_term[i, i] = (U0 / 2 * (ns[0] * (ns[0] - 1) + ns[1] * (ns[1] - 1))
-                        + U0 / 2 * (ns[2] * (ns[2] - 1) + ns[3] * (ns[3] - 1))
-                        + U0 / 2 * (ns[4] * (ns[4] - 1) + ns[5] * (ns[5] - 1))
-                        + U0 / 2 * (ns[6] * (ns[6] - 1) + ns[7] * (ns[7] - 1))
-                        + U0 / 2 * (ns[8] * (ns[8] - 1) + ns[9] * (ns[9] - 1))
-                        + U0 / 2 * (ns[10] * (ns[10] - 1) + ns[11] * (ns[11] - 1)))
-
-    # u_term = sparse.csr_matrix(u_term)
-    # u_term *= (U0 / 2)
-    return sparse.csr_matrix(u_term)
-
-
-def build_uab_term_mf_cluster(hexagon_mf_bases, delta):
-    base_l = max(hexagon_mf_bases[0].shape)
-    ua, ub = delta/2, -delta/2
-    uab_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
-
-    for i in range(0, base_l):
-        # diagonal interaction part of Hamiltonian
-        ns = np.array([k[0, i] for k in hexagon_mf_bases])
-        uab_term[i, i] = ua * (ns[0] + ns[1] + ns[4] + ns[5] + ns[8] + ns[9]) + ub * (ns[2] + ns[3] + ns[6] + ns[7] + ns[10] + ns[11])
-
-    return sparse.csr_matrix(uab_term)
-
-
-def build_v_term_mf_cluster(hexagon_mf_bases, V0):
-    base_l = max(hexagon_mf_bases[0].shape)
-    v_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
-
-    for i in range(0, base_l):
-        # diagonal interaction part of Hamiltonian
-        ns = [k[0, i] for k in hexagon_mf_bases]
-        v_term[i, i] = V0 * (ns[0] * ns[1] + ns[2] * ns[3] + ns[4] * ns[5] + ns[6] * ns[7]
-                             + ns[8] * ns[9] + ns[10] * ns[11])
-
-    return sparse.csr_matrix(v_term)
-
-
-def build_mu_term_mf_cluster(hexagon_mf_bases, MU0):
-    base_l = max(hexagon_mf_bases[0].shape)
-    mu_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
-
-    for i in range(0, base_l):
-        # diagonal interaction part of Hamiltonian
-        ns = np.array([k[0, i] for k in hexagon_mf_bases])
-        mu_term[i, i] = -MU0 * np.sum(ns)
-
-    return sparse.csr_matrix(mu_term)
-
-
-def build_t_term_mf_cluster(hexagon_mf_bases, ts):
-    base_l = max(hexagon_mf_bases[0].shape)
-    t_term = sparse.lil_matrix((base_l, base_l), dtype=complex)
-    ts_shifted = [ts[2], ts[3], ts[0], ts[1], ts[4], ts[5], ts[2], ts[3], ts[0], ts[1], ts[4], ts[5]]
-    for i in range(0, base_l):
-        ks = np.array([k[0, i] for k in hexagon_mf_bases])
-
-        # off-diagonal kinetic hopping part of Hamiltonian
-        for j in range(0, base_l):
-            ls = np.array([l[0, j] for l in hexagon_mf_bases])
-
-            cmp_results = np.where(np.not_equal(ks, ls))[0]
-            if cmp_results.shape[0] == 2:
-                idx0, idx1 = cmp_results[0], cmp_results[1]
-                if idx0 // 2 == 0 and idx1 // 2 == 5:
-                    idx0, idx1 = idx1, idx0
-                if idx1 - idx0 == 2 or idx1 - idx0 == -10:
-                    if ks[idx0] == ls[idx0] + 1 and ks[idx1] == ls[idx1] - 1:
-                        if (idx0 // 2) % 2:
-                            t_term[i, j] = ts_shifted[idx0] * cmath.sqrt(ks[idx0] * ls[idx1])
-                        else:
-                            t_term[i, j] = np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx0] * ls[idx1])
-                    if ks[idx0] == ls[idx0] - 1 and ks[idx1] == ls[idx1] + 1:
-                        if (idx0 // 2) % 2:
-                            t_term[i, j] = np.conj(ts_shifted[idx0]) * cmath.sqrt(ks[idx1] * ls[idx0])
-                        else:
-                            t_term[i, j] = ts_shifted[idx0] * cmath.sqrt(ks[idx1] * ls[idx0])
-    return sparse.csr_matrix(t_term)
-
-
-def build_vec_s(base_l, ma, n1, n2):
-    # TODO: ma, n1, n2 position
-    return np.array([[np.zeros((base_l, 1), dtype=complex) for _ in range(0, n1 + n2)] for _ in range(0, ma)])
-
-
-def build_var_terms(hexagon_mf_bases, ts):
-    base_l = max(hexagon_mf_bases[0].shape)
-    var_terms = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 24)])
-    # reorder ts into t1up, t3up, t2up, t1up, t3up, t2up, t1dn, t3dn, t2dn, t1dn, t3dn, t2dn
-    t_factors = [ts[0], ts[4], ts[2], ts[0], ts[4], ts[2], ts[1], ts[5], ts[3], ts[1], ts[5], ts[3]]
-    for i in range(0, base_l):
-        ks = np.array([k[0, i] for k in hexagon_mf_bases])
-
-        for j in range(0, base_l):
-            ls = np.array([l[0, j] for l in hexagon_mf_bases])
-
-            # compare k1up, l1up ... k6dn, l6dn
-            cmp_results = np.where(np.not_equal(ks, ls))[0]
-            if cmp_results.shape[0] == 1:
-                idx = cmp_results[0]
-                if abs(ks[idx] - ls[idx]) == 1:
-                    # condition for up_a_term
-                    if idx % 2 == 0 and ks[idx] == ls[idx] - 1:
-                        if idx % 4 == 0:
-                            var_terms[idx // 2][i, j] = t_factors[idx // 2] * cmath.sqrt(ls[idx])
-                        else:
-                            var_terms[idx // 2][i, j] = (t_factors[idx // 2].conj()) * cmath.sqrt(ls[idx])
-                    # condition for up_adg_term
-                    elif idx % 2 == 0 and ks[idx] == ls[idx] + 1:
-                        if idx % 4 == 0:
-                            var_terms[(idx // 2) + 6][i, j] = (t_factors[idx // 2].conj()) * cmath.sqrt(ks[idx])
-                        else:
-                            var_terms[(idx // 2) + 6][i, j] = t_factors[idx // 2] * cmath.sqrt(ks[idx])
-                    # condition for dn_a_term
-                    elif idx % 2 != 0 and ks[idx] == ls[idx] - 1:
-                        if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 12][i, j] = t_factors[(idx // 2) + 6] * cmath.sqrt(ls[idx])
-                        else:
-                            var_terms[(idx // 2) + 12][i, j] = (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ls[idx])
-                    # condition for dn_adg_term
-                    elif idx % 2 != 0 and ks[idx] == ls[idx] + 1:
-                        if (idx - 1) % 4 == 0:
-                            var_terms[(idx // 2) + 18][i, j] = (t_factors[(idx // 2) + 6].conj()) * cmath.sqrt(ks[idx])
-                        else:
-                            var_terms[(idx // 2) + 18][i, j] = t_factors[(idx // 2) + 6] * cmath.sqrt(ks[idx])
-
-    return var_terms
-
-
-def create(name, func, params, cached=False):
-    base, path = os.getcwd(), "var"
-    if not os.path.exists(path):
-        os.makedirs(path)
-    os.chdir(path)
-    if cached:
-        print(f"Loading {name} ...", end=' ', flush=True)
-        ret = np.load(f"{name}.npy")
-        print("Done!", flush=True)
-    else:
-        print(f"Building {name} ...", end=' ', flush=True)
-        ret = func(*params)
-        print(f"saving to file ...", end=' ', flush=True)
-        if sparse.isspmatrix(ret):
-            sparse.save_npz(f"{name}.npz", ret)
+    def get_term(self):
+        if self.is_prepared:
+            return self.term.copy()
         else:
-            np.save(f"{name}.npy", ret)
-        print("Done!", flush=True)
-    os.chdir(base)
-    return ret
+            raise Exception(f"{self.name} is not prepared")
+
+
+class CachedBuilder(Builder):
+
+    cached_path = "var"
+
+    def __init__(self, name, shape):
+        Builder.__init__(self, name, shape)
+        self.coefficient_mat = None
+        self.bases_mat = None
+        self.bases_mat_sparsity = False
+        self.is_prepared = False
+
+    def clear(self):
+        self.bases_mat = None
+        self.coefficient_mat = None
+
+    @abstractmethod
+    def _build_bases(self, **kwargs):
+        pass
+
+    def _build_coefficient(self, **kwargs):
+        self.coefficient_mat = np.array([1])
+        return self.coefficient_mat
+
+    @abstractmethod
+    def _combine(self):
+        pass
+
+    def _save(self):
+        if self.bases_mat is not None:
+            cur_dir = os.getcwd()
+            if not os.path.exists(CachedBuilder.cached_path):
+                os.makedirs(CachedBuilder.cached_path)
+            os.chdir(CachedBuilder.cached_path)
+            print(f"Saving {self.name} ...", flush=True, end=' ')
+            assert sparse.isspmatrix(self.bases_mat) == self.bases_mat_sparsity
+            (sparse.save_npz(f"{self.name}.npz", self.bases_mat) if self.bases_mat_sparsity else
+             np.save(f"{self.name}.npy", self.bases_mat))
+            os.chdir(cur_dir)
+            print(f"Done", flush=True)
+        else:
+            raise Exception(f"{self.name} is not ready for save")
+
+    def _load(self):
+        cur_dir = os.getcwd()
+        if not os.path.exists(CachedBuilder.cached_path):
+            os.makedirs(CachedBuilder.cached_path)
+        os.chdir(CachedBuilder.cached_path)
+        try:
+            print(f"Loading {self.name} ...", flush=True, end=' ')
+            base_mat = (sparse.load_npz(f"{self.name}.npz") if self.bases_mat_sparsity else
+                        np.load(f"{self.name}.npy"))
+            os.chdir(cur_dir)
+            print(f"Done", flush=True)
+            return base_mat
+        finally:
+            os.chdir(cur_dir)
+
+    def prepare_term(self, **kwargs):
+        try:
+            if self.bases_mat is None:
+                self.bases_mat = self._load()
+        except IOError:
+            print(f"Fail to load {self.name}\nTry to build ... ", flush=True, end=' ')
+            self.bases_mat = self._build_bases(**kwargs)
+            print("Done", flush=True)
+            self._save()
+        finally:
+            self.coefficient_mat = self._build_coefficient(**kwargs)
+            if self.bases_mat is not None:
+                self.term = self._combine()
+                self.is_prepared = True
+                return self
+            else:
+                raise Exception(f"{self.name}'s preparation failed")
+
+
+class DiagCachedBuilder(CachedBuilder):
+
+    def __init__(self, name, shape, coefficient):
+        CachedBuilder.__init__(self, name, shape)
+        self.coefficient = coefficient
+
+    def _combine(self):
+        ret = sparse.csr_matrix(np.diagflat(np.multiply(self.coefficient, self.bases_mat)))
+        assert ret.shape == self.shape
+        return ret
+
+    @abstractmethod
+    def _update(self, idx, ns):
+        pass
+
+    def _init_base(self):
+        self.bases_mat = np.zeros(self.shape[0], dtype=complex)
+        return self.bases_mat
+
+    def _build_coefficient(self, **kwargs):
+        self.coefficient = kwargs['coefficient']
+        return np.array([self.coefficient])
+
+    def _build_bases(self, **kwargs):
+        hexagon_mf_bases = kwargs['hexagon_mf_bases']
+        assert hexagon_mf_bases.shape[1] == self.shape[0]
+        base_l = max(hexagon_mf_bases.shape)
+        self._init_base()
+        for i in range(0, base_l):
+            # diagonal interaction part of Hamiltonian
+            ns = [k[i] for k in hexagon_mf_bases]
+            self._update(i, ns)
+
+        return self.bases_mat
+
+
+class HexMFBasesBuilder(CachedBuilder):
+
+    def __init__(self, nmax):
+        CachedBuilder.__init__(self, "HexMFBases", shape=(12, (nmax + 1) ** 12))
+
+    def _combine(self):
+        return self.bases_mat
+
+    def _build_bases(self, **kwargs):
+        base_l = self.shape[1]
+        self.bases_mat = np.array([[0 if j < (base_l / (2 ** (idx+1))) else 1
+                                   for _ in range(0, 2 ** idx)
+                                   for j in range(0, int(base_l / (2 ** idx)))]
+                                  for idx in range(0, 12)], dtype=complex)
+        return self.bases_mat
+
+
+class HexMFOperatorsBuilder(CachedBuilder):
+
+    def __init__(self, nmax):
+        CachedBuilder.__init__(self, "HexMFOperators", shape=(12, (nmax + 1) ** 12, (nmax + 1) ** 12))
+
+    def _combine(self):
+        return self.bases_mat
+
+    def _build_bases(self, **kwargs):
+
+        hexagon_mf_bases = kwargs['hexagon_mf_bases']
+        base_l = self.shape[1]
+        _bases_mat = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 12)])
+
+        kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
+        lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
+
+        cmp_mat = np.not_equal(kss, lss)
+        condition_mat = np.array([[cmp_mat[i, :, j] if np.count_nonzero(cmp_mat[i, :, j]) == 1 else np.zeros(12)
+                                   for j in range(0, base_l)] for i in range(0, base_l)])
+
+        for i, j, k in np.argwhere(condition_mat):
+            if hexagon_mf_bases[k, i] == hexagon_mf_bases[k, j] - 1:
+                _bases_mat[k][i, j] = cmath.sqrt(hexagon_mf_bases[k, j])
+
+        self.bases_mat = np.array([sparse.csr_matrix(mat) for mat in _bases_mat])
+        return self.bases_mat
+
+
+class UTermBuilder(DiagCachedBuilder):
+
+    def __init__(self, nmax, u=1):
+        DiagCachedBuilder.__init__(self, "UTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
+                                   coefficient=u)
+
+    def _combine(self):
+        ret = sparse.csr_matrix(np.diagflat(np.sum(np.multiply(self.coefficient, self.bases_mat), axis=0)))
+        assert ret.shape == self.shape
+        return ret
+
+    def _init_base(self):
+        self.bases_mat = np.zeros((6, self.shape[0]), dtype=complex)
+        return self.bases_mat
+
+    def _update(self, idx, ns):
+        for j in range(0, 6):
+            self.bases_mat[j, idx] = ns[2 * j] * (ns[2 * j] - 1) + ns[2 * j + 1] * (ns[2 * j + 1] - 1)
+
+
+class UABTermBuilder(DiagCachedBuilder):
+
+    def __init__(self, nmax, delta=0.5):
+        DiagCachedBuilder.__init__(self, "UABTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
+                                   coefficient=delta)
+
+    def _combine(self):
+        ua, ub = self.coefficient / 2, -self.coefficient / 2
+        ret = sparse.csr_matrix(np.diagflat(np.multiply(ua, self.bases_mat[0]) + np.multiply(ub, self.bases_mat[1])))
+        assert ret.shape == self.shape
+        return ret
+
+    def _update(self, idx, ns):
+        self.bases_mat[0, idx] = ns[0] + ns[1] + ns[4] + ns[5] + ns[8] + ns[9]
+        self.bases_mat[1, idx] = ns[2] + ns[3] + ns[6] + ns[7] + ns[10] + ns[11]
+
+    def _init_base(self):
+        self.bases_mat = np.zeros((2, self.shape[0]), dtype=complex)
+        return self.bases_mat
+
+
+class VTermBuilder(DiagCachedBuilder):
+
+    def __init__(self, nmax, V=0.25):
+        DiagCachedBuilder.__init__(self, "VTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
+                                   coefficient=V)
+
+    def _update(self, idx, ns):
+        self.bases_mat[idx] = (ns[0] * ns[1] + ns[2] * ns[3] + ns[4] * ns[5] + ns[6] * ns[7]
+                               + ns[8] * ns[9] + ns[10] * ns[11])
+
+
+class MUTermBuilder(DiagCachedBuilder):
+
+    def __init__(self, nmax, MU=1):
+        DiagCachedBuilder.__init__(self, "MUTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
+                                   coefficient=MU)
+
+    def _update(self, idx, ns):
+        self.bases_mat[idx] = -np.sum(ns)
+
+
+class TTermBuilder(CachedBuilder):
+
+    def __init__(self, nmax):
+        CachedBuilder.__init__(self, "TTerm", shape=((nmax + 1) ** 12, (nmax + 1) ** 12))
+
+    def _combine(self):
+        t_coefficient_mat = sparse.lil_matrix((self.shape[0], self.shape[0]), dtype=complex)
+        for i, j in np.argwhere(self.bases_mat[1]):
+            k = self.bases_mat[1][i, j].imag
+            k_idx = np.int(np.round(k))
+            t_coefficient_mat[i, j] = self.coefficient_mat[k_idx] if k > 0 else np.conj(self.coefficient_mat[-k_idx])
+        return sparse.csr_matrix(t_coefficient_mat.multiply(self.bases_mat[0]))
+
+    def _build_coefficient(self, **kwargs):
+        ts = kwargs['ts']
+        self.coefficient_mat = np.array([ts[2], ts[3], ts[0], ts[1], ts[4], ts[5], ts[2], ts[3], ts[0], ts[1], ts[4], ts[5]])
+        return self.coefficient_mat
+
+    def _build_bases(self, **kwargs):
+
+        hexagon_mf_bases = kwargs['hexagon_mf_bases']
+        base_l = max(hexagon_mf_bases[0].shape)
+        t_term_base = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 2)])
+
+        kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
+        lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
+
+        cmp_mat = np.not_equal(kss, lss)
+        condition_mat = np.array([[cmp_mat[i, :, j] if np.count_nonzero(cmp_mat[i, :, j]) == 2 else np.zeros(12)
+                                   for j in range(0, base_l)] for i in range(0, base_l)])
+
+        arg_mat = np.argwhere(condition_mat)
+        arg_mat = arg_mat.reshape((arg_mat.shape[0] // 2, 2, 3))
+        for pair in arg_mat:
+            i, j, k1 = pair[0, 0:3]
+            k2 = pair[1, 2]
+            if k1 // 2 == 0 and k2 // 2 == 5:
+                k1, k2 = k2, k1
+            if k2 - k1 == 2 or k2 - k1 == -10:
+                if kss[i, k1, j] == lss[i, k1, j] + 1 and kss[i, k2, j] == lss[i, k2, j] - 1:
+                    t_term_base[0][i, j] = np.sqrt(kss[i, k1, j] * lss[i, k2, j])
+                    t_term_base[1][i, j] = complex(1, k1) if (k1 // 2) % 2 else complex(1, -k1)
+                elif kss[i, k1, j] == lss[i, k1, j] - 1 and kss[i, k2, j] == lss[i, k2, j] + 1:
+                    t_term_base[0][i, j] = np.sqrt(kss[i, k2, j] * lss[i, k1, j])
+                    t_term_base[1][i, j] = complex(1, -k1+0.1) if (k1 // 2) % 2 else complex(1, k1+0.1)
+        self.bases_mat = t_term_base
+
+        return self.bases_mat
+
+
+class VarTermsBuilder(CachedBuilder):
+
+    def __init__(self, nmax):
+        CachedBuilder.__init__(self, "VarTerm", shape=(24, (nmax + 1) ** 12, (nmax + 1) ** 12))
+
+    def _combine(self):
+        t_factor_mat = np.array([sparse.lil_matrix((self.shape[1], self.shape[1]), dtype=complex) for _ in range(0, 24)])
+        for i in range(0, 24):
+            for j, k in np.argwhere(self.bases_mat[1][i]):
+                idx = np.int(self.bases_mat[1][i][j, k].imag)
+                t_factor_mat[i][j, k] = self.coefficient_mat[idx] if idx > 0 else np.conj(self.coefficient_mat[-idx])
+        ret = np.array([sparse.csr_matrix(t_mat.multiply(b_mat)) for t_mat, b_mat in zip(t_factor_mat, self.bases_mat[0])])
+        return ret
+
+    def _build_coefficient(self, **kwargs):
+        ts = kwargs['ts']
+        self.coefficient_mat = np.array([ts[0], ts[4], ts[2], ts[0], ts[4], ts[2], ts[1], ts[5], ts[3], ts[1], ts[5], ts[3]])
+        return self.coefficient_mat
+
+    def _build_bases(self, **kwargs):
+
+        hexagon_mf_bases = kwargs['hexagon_mf_bases']
+        base_l = max(hexagon_mf_bases[0].shape)
+        var_term_base = np.array([[sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 24)] for _ in range(0, 2)])
+        # var_term_base = np.tile(np.repeat(sparse.lil_matrix((base_l, base_l), dtype=complex), 24), (2, 1))
+
+        kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
+        lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
+
+        cmp_mat = np.not_equal(kss, lss)
+        condition_mat = np.array([[cmp_mat[i, :, j] if np.count_nonzero(cmp_mat[i, :, j]) == 1 else np.zeros(12)
+                                   for j in range(0, base_l)] for i in range(0, base_l)])
+
+        for ii, jj, kk in np.argwhere(condition_mat):
+
+            if np.abs(kss[ii, kk, jj] - lss[ii, kk, jj]) == 1:
+                # condition for up_a_term
+                if kk % 2 == 0 and kss[ii, kk, jj] == lss[ii, kk, jj] - 1:
+                    var_term_base[0][kk // 2][ii, jj] = np.sqrt(lss[ii, kk, jj])
+                    var_term_base[1][kk // 2][ii, jj] = complex(1, -(kk // 2)) if kk % 4 else complex(1, (kk // 2))
+                # condition for up_adg_term
+                elif kk % 2 == 0 and kss[ii, kk, jj] == lss[ii, kk, jj] + 1:
+                    var_term_base[0][(kk // 2) + 6][ii, jj] = np.sqrt(kss[ii, kk, jj])
+                    var_term_base[1][(kk // 2) + 6][ii, jj] = complex(1, (kk // 2)) if kk % 4 else complex(1, -(kk // 2))
+                # condition for dn_a_term
+                elif kk % 2 != 0 and kss[ii, kk, jj] == lss[ii, kk, jj] - 1:
+                    var_term_base[0][(kk // 2) + 12][ii, jj] = np.sqrt(lss[ii, kk, jj])
+                    var_term_base[1][(kk // 2) + 12][ii, jj] = complex(1, (-((kk // 2) + 6))) if (kk - 1) % 4 else complex(1, ((kk // 2) + 6))
+                # condition for dn_adg_term
+                elif kk % 2 != 0 and kss[ii, kk, jj] == lss[ii, kk, jj] + 1:
+                    var_term_base[0][(kk // 2) + 18][ii, jj] = np.sqrt(kss[ii, kk, jj])
+                    var_term_base[1][(kk // 2) + 18][ii, jj] = complex(1, ((kk // 2) + 6)) if (kk - 1) % 4 else complex(1, (-((kk // 2) + 6)))
+
+        self.bases_mat = var_term_base
+        return self.bases_mat
+
+
+class TsBuilder(Builder):
+
+    def __init__(self, W):
+        Builder.__init__(self, "Ts", shape=(6, ))
+        t0 = 1 + 0j
+        t1, t2, t3 = t0, t0 * cmath.exp(1j * W), t0 * cmath.exp(-1j * W)
+        t1_up, t2_up, t3_up = t1, t2, t3
+        t1_dn, t2_dn, t3_dn = t1_up.conjugate(), t2_up.conjugate(), t3_up.conjugate()
+        self.term = np.array([t1_up, t1_dn, t2_up, t2_dn, t3_up, t3_dn])
+
+
+def build(model, **kwargs):
+    return model(nmax=kwargs['nmax']).prepare_term(**kwargs).get_term()
 
 
 def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
-            delta, MU, U, V, W, mu_lower_bound, mu_upper_bound, ma,
-            cached=False):
-    hexagon_mf_bases = create("hexagon_mf_bases", func=build_hexagon_mf_basis, params=[nmax], cached=cached)
-    hexagon_mf_operators = create("hexagon_mf_operators", func=build_hexagon_mf_operator, params=[hexagon_mf_bases], cached=cached)
+            delta, MU, U, V, W, mu_lower_bound, mu_upper_bound, ma):
 
+    # non-term preparations
     # range setting of hopping strength
     # ta-part1,near phase transition boundary, need to be calculated more densely
     t_a = np.linspace(t_lower_bound, t_pivot, n1)
     # tb-part2
     t_b = np.linspace(t_pivot, t_upper_bound, n2)
     tA = np.array([*t_a, *t_b])
-
-    # setting tunneling terms
-    # phase winding factor W
-
-    t0 = 1 + 0j
-    t1, t2, t3 = t0, t0 * cmath.exp(1j * W), t0 * cmath.exp(-1j * W)
-    t1_up, t2_up, t3_up = t1, t2, t3
-    t1_dn, t2_dn, t3_dn = t1_up.conjugate(), t2_up.conjugate(), t3_up.conjugate()
-    ts = np.array([t1_up, t1_dn, t2_up, t2_dn, t3_up, t3_dn])
-
     # the range of mu, chemical potential
     Ma = np.linspace(mu_lower_bound, mu_upper_bound, ma)
-
-    # build Hamiltonian terms
-    uab_term = create("uab_term", func=build_uab_term_mf_cluster, params=[hexagon_mf_bases, delta], cached=cached)
-    u_term = create("u_term", func=build_u_term_mf_cluster, params=[hexagon_mf_bases, U], cached=cached)
-    v_term = create("v_term", func=build_v_term_mf_cluster, params=[hexagon_mf_bases, V], cached=cached)
-    mu_term = create("mu_term", func=build_mu_term_mf_cluster, params=[hexagon_mf_bases, MU], cached=cached)
-    t_term = create("t_term", func=build_t_term_mf_cluster, params=[hexagon_mf_bases, ts], cached=cached)
-    var_terms = create("var_terms", func=build_var_terms, params=[hexagon_mf_bases, ts], cached=cached)
-
     # build other vars
-    print("Building other terms ...", end=' ', flush=True)
     dig_h = sparse.eye((nmax + 1) ** 12, dtype=complex, format='csr')
     # the range of order parameters trial solution, the trial OrderParameter is Complex with Pa(i,j)=Pr*exp(i*theta)
     Pr = np.linspace(0.01, cmath.sqrt(nmax), 10)
     # Psi1up, Psi1dn, Psi2up, Psi2dn ... Psi6up, Psi6dn
-    Psi_s = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 20)])
+    Psi_s = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (20, 1, 1))
     # N1up, ... N2dn, N1squareup, ... N2squaredn
-    Ns = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 12)])
-    Nsquare_s = np.array([np.zeros((ma, n1 + n2), dtype=complex) for _ in range(0, 12)])
+    Ns = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
+    Nsquare_s = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
     # store all the eigen-vectors solved
-    Vec_s = build_vec_s(max(hexagon_mf_bases[0].shape), ma, n1, n2)
+    Vec_s = np.tile(np.zeros((nmax+1)**12, dtype=complex), (ma, n1+n2, 1))
 
-    print("Done!", flush=True)
+    # ts
+    ts = TsBuilder(W=W).get_term()
 
-    print(f"Convert to CSR matrices ...", end=' ', flush=True)
-    hexagon_mf_operators = np.array([sparse.csr_matrix(op) for op in hexagon_mf_operators])
-    var_terms = np.array([sparse.csr_matrix(var) for var in var_terms])
-    print("Done!", flush=True)
+    # build terms
+    mf_bases = build(model=HexMFBasesBuilder, nmax=nmax)
+    mf_ops = build(model=HexMFOperatorsBuilder, nmax=nmax, hexagon_mf_bases=mf_bases)
+    u_term = build(model=UTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=U)
+    uab_term = build(model=UABTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=delta)
+    v_term = build(model=VTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=V)
+    mu_term = build(model=MUTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=MU)
+    t_term = build(model=TTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
+    var_terms = build(model=VarTermsBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
 
-    return {"hexagon_mf_operators": hexagon_mf_operators,
+    return {"hexagon_mf_operators": mf_ops,
+            "hexagon_mf_bases": mf_bases,
             't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
-            'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term, 'var_terms': var_terms,
+            'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term,
+            'var_terms': var_terms,
             'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'Vec_s': Vec_s, 'Nsquare_s': Nsquare_s}
+
+if __name__ == '__main__':
+    from utilities import load_params
+    params = load_params("params.json")
+    terms = builder(nmax=params['nmax'], t_lower_bound=params['t_lower_bound'], t_pivot=params['t_pivot'],
+                    t_upper_bound=params['t_upper_bound'],
+                    n1=params['n1'], n2=params['n2'], delta=params['delta'], MU=params['MU'], U=params['U'],
+                    V=params['V'], W=params['W'],
+                    mu_lower_bound=params['mu_lower_bound'], mu_upper_bound=params['mu_upper_bound'], ma=params['ma'])
+
+    cur_dir = os.getcwd()
+    target = "build_result"
+    if not os.path.exists(target):
+        os.makedirs(target)
+    os.chdir(target)
+    term_list = ['uab_term', 'u_term', 'v_term', 'mu_term', 't_term', 'var_terms', 'hexagon_mf_operators',
+                 'hexagon_mf_bases']
+    for term in term_list:
+        if sparse.isspmatrix(terms[term]):
+            sparse.save_npz(f"{term}.npz", terms[term])
+        else:
+            np.save(f"{term}.npy", terms[term])
+    os.chdir(cur_dir)
+
