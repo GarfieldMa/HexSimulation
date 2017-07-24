@@ -366,6 +366,7 @@ def build(model, **kwargs):
 def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
             delta, MU, U, V, W, mu_lower_bound, mu_upper_bound, ma):
 
+    base_l = (nmax + 1) ** 12
     # non-term preparations
     # range setting of hopping strength
     # ta-part1,near phase transition boundary, need to be calculated more densely
@@ -386,7 +387,7 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     Nsquare_s = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
     # store all the eigen-vectors solved
     # Vec_s = np.tile(np.zeros((nmax+1)**12, dtype=complex), (ma, n1+n2, 1))
-    Vec_s = np.tile(np.zeros((nmax + 1) ** 12, dtype=complex), (ma, n1 + n2, 100, 1))
+    EVals = np.zeros((ma, n1+n2, 100), dtype=complex)
 
     # ts
     ts = TsBuilder(W=W).get_term()
@@ -405,7 +406,7 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
             't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
             'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term,
             'var_terms': var_terms,
-            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'Vec_s': Vec_s, 'Nsquare_s': Nsquare_s}
+            'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'EVals': EVals, 'Nsquare_s': Nsquare_s}
 
 if __name__ == '__main__':
     from utilities import load_params

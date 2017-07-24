@@ -40,15 +40,11 @@ def calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_ter
 
 def update(h_hexa, hexagon_mf_operators, psi_s, err):
     try:
-        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR', k=100)
+        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR', k=1)
     except sparse.linalg.ArpackNoConvergence:
         return False, None, None
-        # d_hex = sparse.linalg.ArpackNoConvergence.eigenvalues
-        # vec_hex = sparse.linalg.ArpackNoConvergence.eigenvectors
-    args = np.argsort(d_hex)
-    vec_hex = vec_hex[:, args]
+
     v_hex_min = vec_hex[:, 0]
-    # _, v_hex_min = min(zip(d_hex, vec_hex.T), key=lambda x: x[0])
 
     v_hex_min = sparse.csr_matrix(v_hex_min).transpose()
     Phi_s = np.array([(v_hex_min.getH().dot(b.dot(v_hex_min))).data[0] for b in hexagon_mf_operators])
@@ -57,7 +53,7 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
     # value difference for designated order parameters with the trial solutions
     is_self_consistent = np.any(np.greater(np.repeat(err, 12), np.absolute(Phi_s-phi_s)))
 
-    return is_self_consistent, Phi_s, v_hex_min, vec_hex
+    return is_self_consistent, Phi_s, v_hex_min
 
 
 def load_params(file):
@@ -65,7 +61,7 @@ def load_params(file):
         return json.load(fp)
 
 
-def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, Vec_s, params):
+def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, EVals, params):
     base = os.getcwd()
     path = datetime.today().strftime("%Y_%m_%d_%H%M%S")
     os.makedirs(path)
@@ -78,7 +74,7 @@ def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, Vec_s, params):
                                "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18],
                                "N1up": Ns[0], "N1dn": Ns[1],
                                "N1squareup": Nsquare_s[0], "N1squaredn": Nsquare_s[1],
-                               "Vec_s": Vec_s, "tA": tA, "Ma": Ma})
+                               "EVals": EVals, "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
 
