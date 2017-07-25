@@ -40,7 +40,7 @@ def calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_ter
 
 def update(h_hexa, hexagon_mf_operators, psi_s, err):
     try:
-        d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR', k=1)
+        d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA', k=1)
     except sparse.linalg.ArpackNoConvergence:
         return False, None, None
 
@@ -61,7 +61,7 @@ def load_params(file):
         return json.load(fp)
 
 
-def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, EVals, params):
+def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, EVals, EVecs, params):
     base = os.getcwd()
     path = datetime.today().strftime("%Y_%m_%d_%H%M%S")
     os.makedirs(path)
@@ -74,7 +74,7 @@ def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, EVals, params):
                                "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18],
                                "N1up": Ns[0], "N1dn": Ns[1],
                                "N1squareup": Nsquare_s[0], "N1squaredn": Nsquare_s[1],
-                               "EVals": EVals, "tA": tA, "Ma": Ma})
+                               "EVals": EVals, 'EVecs': EVecs, "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
 

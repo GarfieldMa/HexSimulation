@@ -7,7 +7,7 @@ from utilities import calc_h_hexa, update
 
 def iterate(k, j, t, wall_time, hexagon_mf_operators,
             ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
-            dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, err):
+            dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err):
     t_begin = time()
     mu = Ma.flat[j]
     # initial d_hex_min is the minimum of eigenvalue
@@ -24,7 +24,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         # solve the Hamilton with Eigenvectors and Eigenvalues
         # python returns array of Eigenvalues and normalized Eigenvectors
         try:
-            d_hex, vec_hex = sparse.linalg.eigs(h_hexa, which='SR', k=1)
+            d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA', k=1)
             d_hex0, v_hex0 = d_hex[0], vec_hex[:, 0]
         except sparse.linalg.ArpackNoConvergence:
             continue
@@ -51,7 +51,10 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         # Phi_s[2] = np.nan
 
     if Phi_s is not None:
-        EVals[j, k] = np.sort(sparse.linalg.eigs(h_hexa, which='SR', k=100, return_eigenvectors=False))
+        evals, evecs = sparse.linalg.eigsh(h_hexa, which='SA', k=100)
+        args = np.argsort(evals)
+        EVals[j, k] = evals[args]
+        EVecs[j, k] = evecs[:, args].T
 
         # save the final optimal value of both order parameters£¬also save the
         # corresponding state eigenvector
@@ -85,41 +88,41 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         for i in range(4, 8):
             Ns[i][j, k] = np.nan
     print(f"{k}, {j} iteration finished in {time()-t_begin:.4} seconds with Psi1up{j,k}={Psi_s[0][j, k]}", flush=True)
-    return Psi_s, Ns, Nsquare_s
+    return Psi_s, Ns, Nsquare_s, EVals, EVecs
 
 
 def solves_part(hexagon_mf_operators,
                 start_t, stop_t, ts, Ma,
                 uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, err, wall_time):
+                dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err, wall_time):
     start, stop = len(start_t), len(stop_t)
     for k in range(start, start + stop):
         # set hopping parameter
         t = stop_t.flat[k - start]
 
         for j in range(0, len(Ma)):
-            Psi_s, Ns, Nsquare_s = iterate(k, j, t, wall_time, hexagon_mf_operators,
-                                           ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                                           dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, err)
+            Psi_s, Ns, Nsquare_s, EVals, EVecs = iterate(k, j, t, wall_time, hexagon_mf_operators,
+                                                         ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                                         dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err)
 
-    return Psi_s, Ns, Nsquare_s
+    return Psi_s, Ns, Nsquare_s, EVals, EVecs
 
 
 def solves(hexagon_mf_operators,
            t_a, t_b, ts, Ma,
            uab_term, u_term, v_term, mu_term, t_term, var_terms,
-           dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals,
+           dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs,
            err, wall_time):
     t_begin = time()
     print("Simulation begin!", flush=True)
-    Psi_s, Ns, Nsquare_s = solves_part(hexagon_mf_operators,
-                                       [], t_a, ts, Ma,
-                                       uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                                       dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, err, wall_time)
-    Psi_s, Ns, Nsquare_s = solves_part(hexagon_mf_operators,
-                                       t_a, t_b, ts, Ma,
-                                       uab_term, u_term, v_term, mu_term, t_term, var_terms,
-                                       dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, err, wall_time)
+    Psi_s, Ns, Nsquare_s, EVals, EVecs = solves_part(hexagon_mf_operators,
+                                                     [], t_a, ts, Ma,
+                                                     uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                                     dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err, wall_time)
+    Psi_s, Ns, Nsquare_s, EVals, EVecs  = solves_part(hexagon_mf_operators,
+                                                      t_a, t_b, ts, Ma,
+                                                      uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                                      dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err, wall_time)
     print(f"Simulation completed within {time()-t_begin:.4} seconds", flush=True)
-    return {'Psi_s': Psi_s, 'Ns': Ns, 'Nsquare_s': Nsquare_s, 'EVals': EVals}
+    return {'Psi_s': Psi_s, 'Ns': Ns, 'Nsquare_s': Nsquare_s, 'EVals': EVals, 'EVecs': EVecs}
 
