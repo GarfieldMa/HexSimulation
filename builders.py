@@ -387,8 +387,8 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     Nsquare_s = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
     # store all the eigen-vectors solved
     # Vec_s = np.tile(np.zeros((nmax+1)**12, dtype=complex), (ma, n1+n2, 1))
-    EVals = np.zeros((ma, n1+n2, 100), dtype=complex)
-    EVecs = np.zeros((ma, n1+n2, 100, base_l), dtype=complex)
+    EVals = np.zeros((ma, n1+n2, 10), dtype=complex)
+    EVecs = np.zeros((ma, n1+n2, 10, base_l), dtype=complex)
 
     # ts
     ts = TsBuilder(W=W).get_term()
@@ -424,8 +424,7 @@ if __name__ == '__main__':
     if not os.path.exists(target):
         os.makedirs(target)
     os.chdir(target)
-    term_list = ['uab_term', 'u_term', 'v_term', 'mu_term', 't_term', 'var_terms', 'hexagon_mf_operators',
-                 'hexagon_mf_bases']
+    term_list = ['uab_term', 'u_term', 'v_term', 'mu_term', 't_term', 'var_terms', 'hexagon_mf_operators']
     for term in term_list:
         if sparse.isspmatrix(terms[term]):
             sparse.save_npz(f"{term}.npz", terms[term])

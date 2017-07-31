@@ -51,7 +51,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
         # Phi_s[2] = np.nan
 
     if Phi_s is not None:
-        evals, evecs = sparse.linalg.eigsh(h_hexa, which='SA', k=100)
+        evals, evecs = sparse.linalg.eigsh(h_hexa, which='SA', k=10)
         args = np.argsort(evals)
         EVals[j, k] = evals[args]
         EVecs[j, k] = evecs[:, args].T
