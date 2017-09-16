@@ -97,5 +97,4 @@ ENV/
 
 .idea/
 
-# parameters
-*.json
+
