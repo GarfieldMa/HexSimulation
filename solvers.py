@@ -5,8 +5,8 @@ from time import time
 from utilities import calc_h_hexa, update
 
 
-def iterate(k, j, t, wall_time, hexagon_mf_operators,
-            ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
+def iterate(k, j, g, wall_time, hexagon_mf_operators,
+            ts, Ma, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
             dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err):
     t_begin = time()
     mu = Ma.flat[j]
@@ -20,7 +20,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
         # import the 6 single-site mean-field Hamiltonians for a Honeycomb lattice
         #  with two species of Pseudospins
-        h_hexa = calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
+        h_hexa = calc_h_hexa(g, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts)
         # solve the Hamilton with Eigenvectors and Eigenvalues
         # python returns array of Eigenvalues and normalized Eigenvectors
         try:
@@ -43,7 +43,7 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
             break
         else:
             psi_s = Phi_s
-            h_hexa = calc_h_hexa(t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, var_terms, dig_h, ts)
+            h_hexa = calc_h_hexa(g, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts)
             is_self_consistent, Phi_s, v_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
 
     if not is_self_consistent:
@@ -93,35 +93,35 @@ def iterate(k, j, t, wall_time, hexagon_mf_operators,
 
 def solves_part(hexagon_mf_operators,
                 start_t, stop_t, ts, Ma,
-                uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
                 dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err, wall_time):
     start, stop = len(start_t), len(stop_t)
     for k in range(start, start + stop):
         # set hopping parameter
-        t = stop_t.flat[k - start]
+        g = stop_t.flat[k - start]
 
         for j in range(0, len(Ma)):
-            Psi_s, Ns, Nsquare_s, EVals, EVecs = iterate(k, j, t, wall_time, hexagon_mf_operators,
-                                                         ts, Ma, uab_term, u_term, v_term, mu_term, t_term, var_terms,
+            Psi_s, Ns, Nsquare_s, EVals, EVecs = iterate(k, j, g, wall_time, hexagon_mf_operators,
+                                                         ts, Ma, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
                                                          dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err)
 
     return Psi_s, Ns, Nsquare_s, EVals, EVecs
 
 
 def solves(hexagon_mf_operators,
-           t_a, t_b, ts, Ma,
-           uab_term, u_term, v_term, mu_term, t_term, var_terms,
+           g_a, g_b, ts, Ma,
+           uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
            dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs,
            err, wall_time):
     t_begin = time()
     print("Simulation begin!", flush=True)
     Psi_s, Ns, Nsquare_s, EVals, EVecs = solves_part(hexagon_mf_operators,
-                                                     [], t_a, ts, Ma,
-                                                     uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                                     [], g_a, ts, Ma,
+                                                     uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
                                                      dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err, wall_time)
     Psi_s, Ns, Nsquare_s, EVals, EVecs  = solves_part(hexagon_mf_operators,
-                                                      t_a, t_b, ts, Ma,
-                                                      uab_term, u_term, v_term, mu_term, t_term, var_terms,
+                                                      g_a, g_b, ts, Ma,
+                                                      uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
                                                       dig_h, Pr, Psi_s, Ns, Nsquare_s, EVals, EVecs, err, wall_time)
     print(f"Simulation completed within {time()-t_begin:.4} seconds", flush=True)
     return {'Psi_s': Psi_s, 'Ns': Ns, 'Nsquare_s': Nsquare_s, 'EVals': EVals, 'EVecs': EVecs}

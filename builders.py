@@ -291,6 +291,47 @@ class TTermBuilder(CachedBuilder):
         return self.bases_mat
 
 
+class GTermBuilder(CachedBuilder):
+
+    def __init__(self, nmax):
+        CachedBuilder.__init__(self, "GTerm", shape=((nmax + 1) ** 12, (nmax + 1) ** 12))
+
+    def _combine(self):
+        return self.bases_mat[0]
+
+    def _build_coefficient(self, **kwargs):
+        pass
+
+    def _build_bases(self, **kwargs):
+
+        hexagon_mf_bases = kwargs['hexagon_mf_bases']
+        base_l = max(hexagon_mf_bases[0].shape)
+        g_term_base = sparse.lil_matrix((base_l, base_l), dtype=complex)
+
+        kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
+        lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
+
+        cmp_mat = np.not_equal(kss, lss)
+        condition_mat = np.array([[cmp_mat[i, :, j] if np.count_nonzero(cmp_mat[i, :, j]) == 2 else np.zeros(12)
+                                   for j in range(0, base_l)] for i in range(0, base_l)])
+
+        arg_mat = np.argwhere(condition_mat)
+        arg_mat = arg_mat.reshape((arg_mat.shape[0] // 2, 2, 3))
+        for pair in arg_mat:
+            i, j, k1 = pair[0, 0:3]
+            k2 = pair[1, 2]
+            if k2 - k1 == 1 and k1 % 2 == 0:
+                if kss[i, k1, j] == lss[i, k1, j] + 1 and kss[i, k2, j] == lss[i, k2, j] - 1:
+                    g_term_base[i, j] = np.sqrt(kss[i, k1, j] * lss[i, k2, j])
+                    # g_term_base[1][i, j] = complex(1, k1) if (k1 // 2) % 2 else complex(1, -k1)
+                elif kss[i, k1, j] == lss[i, k1, j] - 1 and kss[i, k2, j] == lss[i, k2, j] + 1:
+                    g_term_base[i, j] = np.sqrt(kss[i, k2, j] * lss[i, k1, j])
+                    # g_term_base[1][i, j] = complex(1, -k1+0.1) if (k1 // 2) % 2 else complex(1, k1+0.1)
+        self.bases_mat = g_term_base
+
+        return self.bases_mat
+
+
 class VarTermsBuilder(CachedBuilder):
 
     def __init__(self, nmax):
@@ -363,17 +404,17 @@ def build(model, **kwargs):
     return model(nmax=kwargs['nmax']).prepare_term(**kwargs).get_term()
 
 
-def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
+def builder(nmax, g_lower_bound, g_pivot, g_upper_bound, n1, n2,
             delta, MU, U, V, W, mu_lower_bound, mu_upper_bound, ma):
 
     base_l = (nmax + 1) ** 12
     # non-term preparations
     # range setting of hopping strength
     # ta-part1,near phase transition boundary, need to be calculated more densely
-    t_a = np.linspace(t_lower_bound, t_pivot, n1)
+    g_a = np.linspace(g_lower_bound, g_pivot, n1)
     # tb-part2
-    t_b = np.linspace(t_pivot, t_upper_bound, n2)
-    tA = np.array([*t_a, *t_b])
+    g_b = np.linspace(g_pivot, g_upper_bound, n2)
+    gA = np.array([*g_a, *g_b])
     # the range of mu, chemical potential
     Ma = np.linspace(mu_lower_bound, mu_upper_bound, ma)
     # build other vars
@@ -401,22 +442,24 @@ def builder(nmax, t_lower_bound, t_pivot, t_upper_bound, n1, n2,
     v_term = build(model=VTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=V)
     mu_term = build(model=MUTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=MU)
     t_term = build(model=TTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
+    g_term = build(model=GTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases)
     var_terms = build(model=VarTermsBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
 
     return {"hexagon_mf_operators": mf_ops,
-            't_a': t_a, 't_b': t_b, 'tA': tA, 'ts': ts, 'Ma': Ma,
+            'g_a': g_a, 'g_b': g_b, 'gA': gA, 'ts': ts, 'Ma': Ma,
             'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term,
-            'var_terms': var_terms,
+            'g_term': g_term, 'var_terms': var_terms,
             'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'EVals': EVals, 'EVecs': EVecs,
             'Nsquare_s': Nsquare_s}
+
 
 if __name__ == '__main__':
     from utilities import load_params
     params = load_params("params.json")
-    terms = builder(nmax=params['nmax'], t_lower_bound=params['t_lower_bound'], t_pivot=params['t_pivot'],
-                    t_upper_bound=params['t_upper_bound'],
+    terms = builder(nmax=params['nmax'], g_lower_bound=params['g_lower_bound'], g_pivot=params['g_pivot'],
+                    g_upper_bound=params['g_upper_bound'],
                     n1=params['n1'], n2=params['n2'], delta=params['delta'], MU=params['MU'], U=params['U'],
-                    V=params['V'], W=params['W'],
+                    V=params['V'],  W=params['W'],
                     mu_lower_bound=params['mu_lower_bound'], mu_upper_bound=params['mu_upper_bound'], ma=params['ma'])
 
     cur_dir = os.getcwd()
