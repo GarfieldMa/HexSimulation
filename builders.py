@@ -55,7 +55,6 @@ class CachedBuilder(Builder):
                 os.makedirs(CachedBuilder.cached_path)
             os.chdir(CachedBuilder.cached_path)
             print(f"Saving {self.name} ...", flush=True, end=' ')
-            assert sparse.isspmatrix(self.bases_mat) == self.bases_mat_sparsity
             (sparse.save_npz(f"{self.name}.npz", self.bases_mat) if self.bases_mat_sparsity else
              np.save(f"{self.name}.npy", self.bases_mat))
             os.chdir(cur_dir)
@@ -295,9 +294,10 @@ class GTermBuilder(CachedBuilder):
 
     def __init__(self, nmax):
         CachedBuilder.__init__(self, "GTerm", shape=((nmax + 1) ** 12, (nmax + 1) ** 12))
+        self.bases_mat_sparsity = True
 
     def _combine(self):
-        return self.bases_mat[0]
+        return self.bases_mat
 
     def _build_coefficient(self, **kwargs):
         pass
@@ -327,7 +327,7 @@ class GTermBuilder(CachedBuilder):
                 elif kss[i, k1, j] == lss[i, k1, j] - 1 and kss[i, k2, j] == lss[i, k2, j] + 1:
                     g_term_base[i, j] = np.sqrt(kss[i, k2, j] * lss[i, k1, j])
                     # g_term_base[1][i, j] = complex(1, -k1+0.1) if (k1 // 2) % 2 else complex(1, k1+0.1)
-        self.bases_mat = g_term_base
+        self.bases_mat = sparse.csr_matrix(g_term_base)
 
         return self.bases_mat
 
@@ -426,6 +426,7 @@ def builder(nmax, g_lower_bound, g_pivot, g_upper_bound, n1, n2,
     # N1up, ... N2dn, N1squareup, ... N2squaredn
     Ns = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
     Nsquare_s = np.tile(np.zeros((ma, n1 + n2), dtype=complex), (12, 1, 1))
+    NaN = np.zeros((ma, n1 + n2), dtype=complex)
     # store all the eigen-vectors solved
     # Vec_s = np.tile(np.zeros((nmax+1)**12, dtype=complex), (ma, n1+n2, 1))
     EVals = np.zeros((ma, n1+n2, 10), dtype=complex)
@@ -442,15 +443,15 @@ def builder(nmax, g_lower_bound, g_pivot, g_upper_bound, n1, n2,
     v_term = build(model=VTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=V)
     mu_term = build(model=MUTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=MU)
     t_term = build(model=TTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
-    g_term = build(model=GTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases)
     var_terms = build(model=VarTermsBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
+    g_term = build(model=GTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases)
 
     return {"hexagon_mf_operators": mf_ops,
             'g_a': g_a, 'g_b': g_b, 'gA': gA, 'ts': ts, 'Ma': Ma,
             'uab_term': uab_term, 'u_term': u_term, 'v_term': v_term, 'mu_term': mu_term, 't_term': t_term,
             'g_term': g_term, 'var_terms': var_terms,
             'dig_h': dig_h, 'Pr': Pr, 'Psi_s': Psi_s, 'Ns': Ns, 'EVals': EVals, 'EVecs': EVecs,
-            'Nsquare_s': Nsquare_s}
+            'Nsquare_s': Nsquare_s, 'NaN': NaN}
 
 
 if __name__ == '__main__':
