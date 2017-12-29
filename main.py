@@ -7,7 +7,7 @@ if __name__ == '__main__':
     params = load_params("params.json")
 
     terms = builder(nmax=params['nmax'], g_lower_bound=params['g_lower_bound'], g_pivot=params['g_pivot'], g_upper_bound=params['g_upper_bound'],
-                    n1=params['n1'], n2=params['n2'], delta=params['delta'], MU=params['MU'], U=params['U'], V=params['V'],  W=params['W'],
+                    n1=params['n1'], n2=params['n2'], delta=params['delta'], MU=params['MU'], U=params['U'], V=params['V'],  W=params['W'], WW=params['WW'],
                     mu_lower_bound=params['mu_lower_bound'], mu_upper_bound=params['mu_upper_bound'], ma=params['ma'])
 
     result = solves(hexagon_mf_operators=terms['hexagon_mf_operators'], g_a=terms['g_a'], g_b=terms['g_b'],

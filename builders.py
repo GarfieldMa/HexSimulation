@@ -297,16 +297,24 @@ class GTermBuilder(CachedBuilder):
         self.bases_mat_sparsity = True
 
     def _combine(self):
-        return self.bases_mat
+        return sparse.csr_matrix(self.coefficient_mat.multiply(self.bases_mat[0]))
 
     def _build_coefficient(self, **kwargs):
-        pass
+        g_coefficient_mat = sparse.lil_matrix((self.shape[0], self.shape[0]), dtype=complex)
+        ww = kwargs['WW']
+
+        for i, j in np.argwhere(self.bases_mat[1]):
+            g_coefficient_mat[i, j] = self.bases_mat[1][i, j] ** ww
+
+        self.coefficient_mat = g_coefficient_mat
+        return self.coefficient_mat
 
     def _build_bases(self, **kwargs):
 
         hexagon_mf_bases = kwargs['hexagon_mf_bases']
         base_l = max(hexagon_mf_bases[0].shape)
-        g_term_base = sparse.lil_matrix((base_l, base_l), dtype=complex)
+        # g_term_base = sparse.lil_matrix((base_l, base_l), dtype=complex)
+        g_term_base = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 2)])
 
         kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
         lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
@@ -315,19 +323,28 @@ class GTermBuilder(CachedBuilder):
         condition_mat = np.array([[cmp_mat[i, :, j] if np.count_nonzero(cmp_mat[i, :, j]) == 2 else np.zeros(12)
                                    for j in range(0, base_l)] for i in range(0, base_l)])
 
+
         arg_mat = np.argwhere(condition_mat)
         arg_mat = arg_mat.reshape((arg_mat.shape[0] // 2, 2, 3))
         for pair in arg_mat:
             i, j, k1 = pair[0, 0:3]
             k2 = pair[1, 2]
+            # k1 is the first different index, k2 is the second
             if k2 - k1 == 1 and k1 % 2 == 0:
                 if kss[i, k1, j] == lss[i, k1, j] + 1 and kss[i, k2, j] == lss[i, k2, j] - 1:
-                    g_term_base[i, j] = np.sqrt(kss[i, k1, j] * lss[i, k2, j])
-                    # g_term_base[1][i, j] = complex(1, k1) if (k1 // 2) % 2 else complex(1, -k1)
+                    g_term_base[0][i, j] = np.sqrt(kss[i, k1, j] * lss[i, k2, j])
+                    # cases from 1up to 3up
+                    if 1 < k1 < 6:
+                        g_term_base[1][i, j] = np.e ** (-2j * np.pi / 3)
+                    elif k1 >= 8:
+                        g_term_base[1][i, j] = np.e ** (2j * np.pi / 3)
                 elif kss[i, k1, j] == lss[i, k1, j] - 1 and kss[i, k2, j] == lss[i, k2, j] + 1:
-                    g_term_base[i, j] = np.sqrt(kss[i, k2, j] * lss[i, k1, j])
-                    # g_term_base[1][i, j] = complex(1, -k1+0.1) if (k1 // 2) % 2 else complex(1, k1+0.1)
-        self.bases_mat = sparse.csr_matrix(g_term_base)
+                    g_term_base[0][i, j] = np.sqrt(kss[i, k2, j] * lss[i, k1, j])
+                    if 1 < k1 < 6:
+                        g_term_base[1][i, j] = np.e ** (2j * np.pi / 3)
+                    elif k1 >= 8:
+                        g_term_base[1][i, j] = np.e ** (-2j * np.pi / 3)
+        self.bases_mat = g_term_base
 
         return self.bases_mat
 
@@ -405,7 +422,7 @@ def build(model, **kwargs):
 
 
 def builder(nmax, g_lower_bound, g_pivot, g_upper_bound, n1, n2,
-            delta, MU, U, V, W, mu_lower_bound, mu_upper_bound, ma):
+            delta, MU, U, V, W, WW, mu_lower_bound, mu_upper_bound, ma):
 
     base_l = (nmax + 1) ** 12
     # non-term preparations
@@ -444,7 +461,7 @@ def builder(nmax, g_lower_bound, g_pivot, g_upper_bound, n1, n2,
     mu_term = build(model=MUTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, coefficient=MU)
     t_term = build(model=TTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
     var_terms = build(model=VarTermsBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, ts=ts)
-    g_term = build(model=GTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases)
+    g_term = build(model=GTermBuilder, nmax=nmax, hexagon_mf_bases=mf_bases, WW=WW)
 
     return {"hexagon_mf_operators": mf_ops,
             'g_a': g_a, 'g_b': g_b, 'gA': gA, 'ts': ts, 'Ma': Ma,
