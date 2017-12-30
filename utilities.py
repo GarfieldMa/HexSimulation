@@ -84,7 +84,9 @@ def dump_result(Psi_s, Ns, Nsquare_s, NaN, gA, Ma, EVals, EVecs, params):
                                  "N3squareup": Nsquare_s[4], "N3squaredn": Nsquare_s[5], "N4squareup": Nsquare_s[6], "N4squaredn": Nsquare_s[7],
                                  "N5squareup": Nsquare_s[8], "N5squaredn": Nsquare_s[9], "N6squareup": Nsquare_s[10], "N6squaredn": Nsquare_s[11]})
 
-    sio.savemat("axis.mat", {"NaN": NaN, "EVals": EVals, 'EVecs': EVecs, "gA": gA, "Ma": Ma})
+    # sio.savemat("axis.mat", {"NaN": NaN, "EVals": EVals, 'EVecs': EVecs, "gA": gA, "Ma": Ma})
+
+    sio.savemat("axis.mat", {"NaN": NaN, "gA": gA, "Ma": Ma})
 
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
