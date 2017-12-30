@@ -9,7 +9,7 @@ from datetime import datetime
 
 def calc_h_hexa(g, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts):
 
-    t = 0.1
+    t = 0.12
 
     psi_up_s = psi_s[::2]
     psi_up_s_shifted = np.roll(psi_up_s, 3)
@@ -69,15 +69,23 @@ def dump_result(Psi_s, Ns, Nsquare_s, NaN, gA, Ma, EVals, EVecs, params):
     path = datetime.today().strftime("%Y_%m_%d_%H%M%S")
     os.makedirs(path)
     os.chdir(path)
-    np.save("Psi_s.npy", Psi_s)
+    np.save("Psis.npy", Psi_s)
     np.save("Ns.npy", Ns)
-    np.save("Nsquare_s.npy", Nsquare_s)
-    sio.savemat("result.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2],
-                               "Psi2dn": Psi_s[3], "Psi1updn": Psi_s[14], "Psi12up": Psi_s[12],
-                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18],
-                               "N1up": Ns[0], "N1dn": Ns[1],
-                               "N1squareup": Nsquare_s[0], "N1squaredn": Nsquare_s[1], "NaN": NaN,
-                               "EVals": EVals, 'EVecs': EVecs, "gA": gA, "Ma": Ma})
+    np.save("Nsquares.npy", Nsquare_s)
+    sio.savemat("Psis.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2], "Psi2dn": Psi_s[3],
+                             "Psi3up": Psi_s[4], "Psi3dn": Psi_s[5], "Psi4up": Psi_s[6], "Psi4dn": Psi_s[7],
+                             "Psi5up": Psi_s[8], "Psi5dn": Psi_s[9], "Psi6up": Psi_s[10], "Psi6dn": Psi_s[11]})
+
+    sio.savemat("Ns.mat", {"Ns1up": Ns[0], "Ns1dn": Ns[1], "Ns2up": Ns[2], "Ns2dn": Ns[3],
+                           "Ns3up": Ns[4], "Ns3dn": Ns[5], "Ns4up": Ns[6], "Ns4dn": Ns[7],
+                           "Ns5up": Ns[8], "Ns5dn": Ns[9], "Ns6up": Ns[10], "Ns6dn": Ns[11]})
+
+    sio.savemat("Nsquares.mat", {"N1squareup": Nsquare_s[0], "N1squaredn": Nsquare_s[1], "N2squareup": Nsquare_s[2], "N2squaredn": Nsquare_s[3],
+                                 "N3squareup": Nsquare_s[4], "N3squaredn": Nsquare_s[5], "N4squareup": Nsquare_s[6], "N4squaredn": Nsquare_s[7],
+                                 "N5squareup": Nsquare_s[8], "N5squaredn": Nsquare_s[9], "N6squareup": Nsquare_s[10], "N6squaredn": Nsquare_s[11]})
+
+    sio.savemat("axis.mat", {"NaN": NaN, "EVals": EVals, 'EVecs': EVecs, "gA": gA, "Ma": Ma})
+
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
 

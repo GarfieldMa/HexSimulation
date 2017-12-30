@@ -294,7 +294,6 @@ class GTermBuilder(CachedBuilder):
 
     def __init__(self, nmax):
         CachedBuilder.__init__(self, "GTerm", shape=((nmax + 1) ** 12, (nmax + 1) ** 12))
-        self.bases_mat_sparsity = True
 
     def _combine(self):
         return sparse.csr_matrix(self.coefficient_mat.multiply(self.bases_mat[0]))
@@ -321,29 +320,39 @@ class GTermBuilder(CachedBuilder):
 
         cmp_mat = np.not_equal(kss, lss)
         condition_mat = np.array([[cmp_mat[i, :, j] if np.count_nonzero(cmp_mat[i, :, j]) == 2 else np.zeros(12)
-                                   for j in range(0, base_l)] for i in range(0, base_l)])
-
+                                   for j in range(0, base_l)] for i in range(0, base_l)], dtype=complex)
 
         arg_mat = np.argwhere(condition_mat)
         arg_mat = arg_mat.reshape((arg_mat.shape[0] // 2, 2, 3))
         for pair in arg_mat:
             i, j, k1 = pair[0, 0:3]
             k2 = pair[1, 2]
+            assert k2 > k1
             # k1 is the first different index, k2 is the second
             if k2 - k1 == 1 and k1 % 2 == 0:
                 if kss[i, k1, j] == lss[i, k1, j] + 1 and kss[i, k2, j] == lss[i, k2, j] - 1:
+
                     g_term_base[0][i, j] = np.sqrt(kss[i, k1, j] * lss[i, k2, j])
+
                     # cases from 1up to 3up
-                    if 1 < k1 < 6:
+                    if k1 in [2, 4]:
                         g_term_base[1][i, j] = np.e ** (-2j * np.pi / 3)
-                    elif k1 >= 8:
+                    elif k1 in [8, 10]:
                         g_term_base[1][i, j] = np.e ** (2j * np.pi / 3)
+                    else:
+                        g_term_base[1][i, j] = 1
+
                 elif kss[i, k1, j] == lss[i, k1, j] - 1 and kss[i, k2, j] == lss[i, k2, j] + 1:
+
                     g_term_base[0][i, j] = np.sqrt(kss[i, k2, j] * lss[i, k1, j])
-                    if 1 < k1 < 6:
+
+                    if k1 in [2, 4]:
                         g_term_base[1][i, j] = np.e ** (2j * np.pi / 3)
-                    elif k1 >= 8:
+                    elif k1 in [8, 10]:
                         g_term_base[1][i, j] = np.e ** (-2j * np.pi / 3)
+                    else:
+                        g_term_base[1][i, j] = 1
+
         self.bases_mat = g_term_base
 
         return self.bases_mat
