@@ -315,6 +315,10 @@ class GTermBuilder(CachedBuilder):
         # g_term_base = sparse.lil_matrix((base_l, base_l), dtype=complex)
         g_term_base = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 2)])
 
+        for i in range(0, base_l):
+            for j in range(0, base_l):
+                g_term_base[1][i, j] = 1
+
         kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
         lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
 
@@ -339,8 +343,8 @@ class GTermBuilder(CachedBuilder):
                         g_term_base[1][i, j] = np.e ** (-2j * np.pi / 3)
                     elif k1 in [8, 10]:
                         g_term_base[1][i, j] = np.e ** (2j * np.pi / 3)
-                    else:
-                        g_term_base[1][i, j] = 1
+                    # else:
+                    #     g_term_base[1][i, j] = 1
 
                 elif kss[i, k1, j] == lss[i, k1, j] - 1 and kss[i, k2, j] == lss[i, k2, j] + 1:
 
@@ -350,8 +354,8 @@ class GTermBuilder(CachedBuilder):
                         g_term_base[1][i, j] = np.e ** (2j * np.pi / 3)
                     elif k1 in [8, 10]:
                         g_term_base[1][i, j] = np.e ** (-2j * np.pi / 3)
-                    else:
-                        g_term_base[1][i, j] = 1
+                    # else:
+                    #     g_term_base[1][i, j] = 1
 
         self.bases_mat = g_term_base
 
