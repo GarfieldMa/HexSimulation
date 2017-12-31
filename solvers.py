@@ -6,7 +6,7 @@ from utilities import calc_h_hexa, update
 
 
 def iterate(k, j, g, wall_time, hexagon_mf_operators,
-            ts, Ma, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
+            ts, Ma, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, t,
             dig_h, Pr, Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs, err):
     t_begin = time()
     mu = Ma.flat[j]
@@ -20,7 +20,7 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
 
         # import the 6 single-site mean-field Hamiltonians for a Honeycomb lattice
         #  with two species of Pseudospins
-        h_hexa = calc_h_hexa(g, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts)
+        h_hexa = calc_h_hexa(g, t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts)
         # solve the Hamilton with Eigenvectors and Eigenvalues
         # python returns array of Eigenvalues and normalized Eigenvectors
         try:
@@ -43,7 +43,7 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
             break
         else:
             psi_s = Phi_s
-            h_hexa = calc_h_hexa(g, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts)
+            h_hexa = calc_h_hexa(g, t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts)
             is_self_consistent, Phi_s, v_hex_min = update(h_hexa, hexagon_mf_operators, psi_s, err)
 
     if not is_self_consistent:
@@ -94,7 +94,7 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
 
 def solves_part(hexagon_mf_operators,
                 start_t, stop_t, ts, Ma,
-                uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
+                uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, t,
                 dig_h, Pr, Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs, err, wall_time):
     start, stop = len(start_t), len(stop_t)
     for k in range(start, start + stop):
@@ -103,7 +103,8 @@ def solves_part(hexagon_mf_operators,
 
         for j in range(0, len(Ma)):
             Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs = iterate(k, j, g, wall_time, hexagon_mf_operators,
-                                                              ts, Ma, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
+                                                              ts, Ma, uab_term, u_term, v_term, mu_term, t_term, g_term,
+                                                              var_terms, t,
                                                               dig_h, Pr, Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs, err)
 
     return Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs
@@ -111,18 +112,18 @@ def solves_part(hexagon_mf_operators,
 
 def solves(hexagon_mf_operators,
            g_a, g_b, ts, Ma,
-           uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
+           uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, t,
            dig_h, Pr, Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs,
            err, wall_time):
     t_begin = time()
     print("Simulation begin!", flush=True)
     Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs= solves_part(hexagon_mf_operators,
                                                          [], g_a, ts, Ma,
-                                                         uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
+                                                         uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, t,
                                                          dig_h, Pr, Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs, err, wall_time)
     Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs = solves_part(hexagon_mf_operators,
                                                           g_a, g_b, ts, Ma,
-                                                          uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms,
+                                                          uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, t,
                                                           dig_h, Pr, Psi_s, Ns, Nsquare_s, NaN, EVals, EVecs, err, wall_time)
     print(f"Simulation completed within {time()-t_begin:.4} seconds", flush=True)
     return {'Psi_s': Psi_s, 'Ns': Ns, 'Nsquare_s': Nsquare_s, 'NaN': NaN, 'EVals': EVals, 'EVecs': EVecs}

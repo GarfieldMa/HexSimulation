@@ -7,9 +7,9 @@ import os
 from datetime import datetime
 
 
-def calc_h_hexa(g, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts):
+def calc_h_hexa(g, t, mu, psi_s, uab_term, u_term, v_term, mu_term, t_term, g_term, var_terms, dig_h, ts):
 
-    t = 0.12
+    # t = 0.12
 
     psi_up_s = psi_s[::2]
     psi_up_s_shifted = np.roll(psi_up_s, 3)
