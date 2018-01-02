@@ -26,6 +26,7 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
         try:
             d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA', k=1)
             d_hex0, v_hex0 = d_hex[0], vec_hex[:, 0]
+            v_hex0 /= np.linalg.norm(v_hex0)
         except sparse.linalg.ArpackNoConvergence:
             continue
 
@@ -59,7 +60,7 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
 
         # save the final optimal value of both order parameters£¬also save the
         # corresponding state eigenvector
-        for i in range(0, 4):
+        for i in range(0, 12):
             Psi_s[i][j, k] = Phi_s[i]
 
         if not is_self_consistent:
@@ -80,9 +81,7 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
             tmp = hexagon_mf_operators[i].getH().dot(hexagon_mf_operators[i])
             Nsquare_s[i][j, k] = (v_hex_min.getH().dot(tmp.dot(tmp.dot(v_hex_min)))).data[0]
     else:
-        for i in range(0, 4):
-            Psi_s[i][j, k] = np.nan
-        for i in range(12, 20):
+        for i in range(0, 20):
             Psi_s[i][j, k] = np.nan
         for i in range(0, 4):
             Ns[i][j, k] = np.nan

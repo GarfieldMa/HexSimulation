@@ -43,6 +43,7 @@ def update(h_hexa, hexagon_mf_operators, psi_s, err):
     try:
         d_hex, vec_hex = sparse.linalg.eigsh(h_hexa, which='SA', k=1)
     except sparse.linalg.ArpackNoConvergence:
+        print("fail to update", flush=True)
         return False, None, None
 
     v_hex_min = vec_hex[:, 0]
@@ -87,6 +88,6 @@ def dump_result(Psi_s, Ns, Nsquare_s, NaN, gA, Ma, EVals, EVecs, params):
     sio.savemat("axis.mat", {"NaN": NaN, "gA": gA, "Ma": Ma})
 
     with open("params.json", 'w') as fp:
-        json.dump(params, fp)
+        json.dump(params, fp, indent=4)
 
     os.chdir(base)
