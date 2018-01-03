@@ -301,7 +301,7 @@ class GTermBuilder(CachedBuilder):
         return sparse.csr_matrix(self.coefficient_mat.multiply(self.bases_mat[0]))
 
     def _build_coefficient(self, **kwargs):
-        g_coefficient_mat = sparse.lil_matrix(np.ones(self.shape[0], self.shape[0]), dtype=complex)
+        g_coefficient_mat = sparse.lil_matrix(np.ones((self.shape[0], self.shape[0]), dtype=complex))
         ww = kwargs['WW']
 
         for i, j in np.argwhere(self.bases_mat[1]):
