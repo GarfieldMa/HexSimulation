@@ -63,8 +63,8 @@ def iterate(k, j, g, wall_time, hexagon_mf_operators,
         for i in range(0, 12):
             Psi_s[i][j, k] = Phi_s[i]
 
-        if not is_self_consistent:
-            Psi_s[2][j, k] = np.nan
+        # if not is_self_consistent:
+        #     Psi_s[2][j, k] = np.nan
 
         Psi_s[12][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[0].getH().dot(hexagon_mf_operators[2].dot(v_hex_min)))).data[0]
         Psi_s[13][j, k] = (v_hex_min.getH().dot(hexagon_mf_operators[1].getH().dot(hexagon_mf_operators[3].dot(v_hex_min)))).data[0]
