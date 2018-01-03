@@ -1,0 +1,18 @@
+{
+    "nmax": 1,
+    "t_lower_bound": 0,
+    "t_pivot": 0.04,
+    "t_upper_bound": 0.1,
+    "mu_lower_bound": -1,
+    "mu_upper_bound": 1,
+    "ma": 10,
+    "n1": 10,
+    "n2": 10,
+    "delta": 0,
+    "MU": 1,
+    "U": 1,
+    "V": 0.25,
+    "W": 0,
+    "wall_time": 16,
+    "err": 1e-05
+}
