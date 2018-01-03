@@ -74,6 +74,6 @@ def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, EVals, EVecs, params):
                                "Psi5up": Psi_s[8], "Psi5dn": Psi_s[9], "Psi6up": Psi_s[10], "Psi6dn": Psi_s[11],
                                "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
-        json.dump(params, fp)
+        json.dump(params, fp, indent=4)
 
     os.chdir(base)
