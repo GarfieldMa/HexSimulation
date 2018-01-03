@@ -69,12 +69,10 @@ def dump_result(Psi_s, Ns, Nsquare_s, tA, Ma, EVals, EVecs, params):
     np.save("Psi_s.npy", Psi_s)
     np.save("Ns.npy", Ns)
     np.save("Nsquare_s.npy", Nsquare_s)
-    sio.savemat("result.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2],
-                               "Psi2dn": Psi_s[3], "Psi1updn": Psi_s[14], "Psi12up": Psi_s[12],
-                               "Psi12dn": Psi_s[13], "Psi1upanddn": Psi_s[18],
-                               "N1up": Ns[0], "N1dn": Ns[1],
-                               "N1squareup": Nsquare_s[0], "N1squaredn": Nsquare_s[1],
-                               "EVals": EVals, 'EVecs': EVecs, "tA": tA, "Ma": Ma})
+    sio.savemat("result.mat", {"Psi1up": Psi_s[0], "Psi1dn": Psi_s[1], "Psi2up": Psi_s[2], "Psi2dn": Psi_s[3],
+                               "Psi3up": Psi_s[4], "Psi3dn": Psi_s[5], "Psi4up": Psi_s[6], "Psi4dn": Psi_s[7],
+                               "Psi5up": Psi_s[8], "Psi5dn": Psi_s[9], "Psi6up": Psi_s[10], "Psi6dn": Psi_s[11],
+                               "tA": tA, "Ma": Ma})
     with open("params.json", 'w') as fp:
         json.dump(params, fp)
 
