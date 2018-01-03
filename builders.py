@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sparse
+import scipy.io as sio
 from time import time
 import cmath
 import os
@@ -208,6 +209,7 @@ class UABTermBuilder(DiagCachedBuilder):
         ua, ub = self.coefficient / 2, -self.coefficient / 2
         ret = sparse.csr_matrix(np.diagflat(np.multiply(ua, self.bases_mat[0]) + np.multiply(ub, self.bases_mat[1])))
         assert ret.shape == self.shape
+        sio.savemat("uab", {"uab": ret})
         return ret
 
     def _update(self, idx, ns):
