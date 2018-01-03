@@ -180,7 +180,7 @@ class HexMFOperatorsBuilder(CachedBuilder):
 
 class UTermBuilder(DiagCachedBuilder):
 
-    def __init__(self, nmax, u=1):
+    def __init__(self, nmax, u=None):
         DiagCachedBuilder.__init__(self, "UTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
                                    coefficient=u)
 
@@ -200,7 +200,7 @@ class UTermBuilder(DiagCachedBuilder):
 
 class UABTermBuilder(DiagCachedBuilder):
 
-    def __init__(self, nmax, delta=0.5):
+    def __init__(self, nmax, delta=None):
         DiagCachedBuilder.__init__(self, "UABTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
                                    coefficient=delta)
 
@@ -221,7 +221,7 @@ class UABTermBuilder(DiagCachedBuilder):
 
 class VTermBuilder(DiagCachedBuilder):
 
-    def __init__(self, nmax, V=0.25):
+    def __init__(self, nmax, V=None):
         DiagCachedBuilder.__init__(self, "VTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
                                    coefficient=V)
 
@@ -232,7 +232,7 @@ class VTermBuilder(DiagCachedBuilder):
 
 class MUTermBuilder(DiagCachedBuilder):
 
-    def __init__(self, nmax, MU=1):
+    def __init__(self, nmax, MU=None):
         DiagCachedBuilder.__init__(self, "MUTerm", shape=(((nmax + 1) ** 12), ((nmax + 1) ** 12)),
                                    coefficient=MU)
 
@@ -299,7 +299,7 @@ class GTermBuilder(CachedBuilder):
         return sparse.csr_matrix(self.coefficient_mat.multiply(self.bases_mat[0]))
 
     def _build_coefficient(self, **kwargs):
-        g_coefficient_mat = sparse.lil_matrix((self.shape[0], self.shape[0]), dtype=complex)
+        g_coefficient_mat = sparse.lil_matrix(np.ones(self.shape[0], self.shape[0]), dtype=complex)
         ww = kwargs['WW']
 
         for i, j in np.argwhere(self.bases_mat[1]):
@@ -315,9 +315,9 @@ class GTermBuilder(CachedBuilder):
         # g_term_base = sparse.lil_matrix((base_l, base_l), dtype=complex)
         g_term_base = np.array([sparse.lil_matrix((base_l, base_l), dtype=complex) for _ in range(0, 2)])
 
-        for i in range(0, base_l):
-            for j in range(0, base_l):
-                g_term_base[1][i, j] = 1
+        # for i in range(0, base_l):
+        #     for j in range(0, base_l):
+        #         g_term_base[1][i, j] = 1
 
         kss = np.repeat(hexagon_mf_bases.T, base_l).reshape(base_l, 12, base_l)
         lss = np.tile(hexagon_mf_bases, (base_l, 1, 1))
